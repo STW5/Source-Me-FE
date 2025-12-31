@@ -2,28 +2,91 @@
 
 import { useEffect, useState } from 'react';
 import { profileService } from '@/services/profileService';
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
+import { authToken } from '@/lib/auth';
 import { SiteProfile } from '@/types/profile';
+import { Project } from '@/types/project';
 
 export default function Home() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    // Check authentication status
+    setIsAuthenticated(authToken.isAuthenticated());
+
+    const fetchData = async () => {
       try {
-        const data = await profileService.getProfile();
-        setProfile(data);
+        const [profileData, projectsData] = await Promise.all([
+          profileService.getProfile(),
+          projectService.getProjects()
+        ]);
+        setProfile(profileData);
+        setProjects(projectsData);
       } catch (err) {
-        setError('프로필을 불러오는데 실패했습니다.');
-        console.error('Failed to fetch profile:', err);
+        setError('데이터를 불러오는데 실패했습니다.');
+        console.error('Failed to fetch data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, []);
+
+  const refreshProjects = async () => {
+    try {
+      const projectsData = await projectService.getProjects();
+      setProjects(projectsData);
+    } catch (err) {
+      console.error('Failed to refresh projects:', err);
+    }
+  };
+
+  const handleCreateProject = () => {
+    setEditingProject(null);
+    setShowModal(true);
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowModal(true);
+  };
+
+  const handleDeleteProject = async (id: number) => {
+    if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return;
+
+    try {
+      await projectService.deleteProject(id);
+      await refreshProjects();
+    } catch (err: any) {
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleLogout = () => {
+    authToken.remove();
+    setIsAuthenticated(false);
+    setEditMode(false);
+  };
+
+  const handleLoginClick = () => {
+    if (isAuthenticated) {
+      // If already logged in, toggle edit mode
+      setEditMode(!editMode);
+    } else {
+      // If not logged in, show login modal
+      setShowLoginModal(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -51,11 +114,39 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="text-xl font-bold text-gray-900">{profile.displayName}</div>
-            <div className="flex gap-6">
+            <div className="flex gap-6 items-center">
               <a href="#home" className="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
               <a href="#projects" className="text-gray-600 hover:text-gray-900 transition-colors">Projects</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
+
+              {isAuthenticated ? (
+                <div className="flex gap-3 items-center">
+                  <button
+                    onClick={() => setEditMode(!editMode)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                      editMode
+                        ? 'bg-orange-600 text-white hover:bg-orange-700'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {editMode ? '편집 종료' : '편집'}
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  로그인
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -161,26 +252,87 @@ export default function Home() {
       {/* Projects Section */}
       <section id="projects" className="min-h-screen flex items-center justify-center py-20 bg-gray-50">
         <div className="container mx-auto px-4 max-w-6xl">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">Projects</h2>
+          <div className="flex justify-between items-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">Projects</h2>
+            {isAuthenticated && editMode && (
+              <button
+                onClick={handleCreateProject}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                + 새 프로젝트
+              </button>
+            )}
+          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Placeholder cards */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                  <span className="text-4xl">🚀</span>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Project {i}</h3>
-                  <p className="text-gray-600 mb-4">프로젝트 설명이 여기에 표시됩니다.</p>
-                  <div className="flex gap-2 flex-wrap">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">React</span>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">Node.js</span>
+          {projects.length === 0 ? (
+            <p className="text-center text-gray-600">프로젝트가 없습니다.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projects.map((project) => (
+                <div key={project.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
+                  <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <span className="text-4xl">🚀</span>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-bold text-gray-900">{project.title}</h3>
+                      {project.isFeatured && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 mb-4">{project.summary}</p>
+                    <div className="flex gap-2 mb-4">
+                      {project.githubUrl && (
+                        <a
+                          href={project.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          GitHub →
+                        </a>
+                      )}
+                      {project.demoUrl && (
+                        <a
+                          href={project.demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          Demo →
+                        </a>
+                      )}
+                    </div>
+                    {(project.startedAt || project.endedAt) && (
+                      <p className="text-xs text-gray-500 mb-3">
+                        {project.startedAt && new Date(project.startedAt).toLocaleDateString('ko-KR')}
+                        {project.endedAt && ` - ${new Date(project.endedAt).toLocaleDateString('ko-KR')}`}
+                        {!project.endedAt && ' - 진행중'}
+                      </p>
+                    )}
+                    {editMode && (
+                      <div className="flex gap-2 pt-3 border-t border-gray-200">
+                        <button
+                          onClick={() => handleEditProject(project)}
+                          className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -230,12 +382,327 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSuccess={() => {
+            setIsAuthenticated(true);
+            setShowLoginModal(false);
+          }}
+        />
+      )}
+
+      {/* Project Form Modal */}
+      {showModal && (
+        <ProjectFormModal
+          project={editingProject}
+          onClose={() => {
+            setShowModal(false);
+            setEditingProject(null);
+          }}
+          onSave={async () => {
+            await refreshProjects();
+            setShowModal(false);
+            setEditingProject(null);
+          }}
+        />
+      )}
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-4 text-center">
           <p>© 2025 {profile.displayName}. All rights reserved.</p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function LoginModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.login(username, password);
+      authToken.set(response.token);
+      authToken.setUsername(response.username);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.response?.data?.message || '로그인에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+          <h2 className="text-2xl font-bold text-gray-900">관리자 로그인</h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              사용자명
+            </label>
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              placeholder="admin"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              비밀번호
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? '로그인 중...' : '로그인'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ProjectFormModal({
+  project,
+  onClose,
+  onSave,
+}: {
+  project: Project | null;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    title: project?.title || '',
+    slug: project?.slug || '',
+    summary: project?.summary || '',
+    contentMarkdown: '',
+    startedAt: project?.startedAt || '',
+    endedAt: project?.endedAt || '',
+    isPublished: true,
+    isFeatured: project?.isFeatured || false,
+    featuredOrder: 0,
+    githubUrl: project?.githubUrl || '',
+    demoUrl: project?.demoUrl || '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = {
+        ...formData,
+        endedAt: formData.endedAt || null,
+        githubUrl: formData.githubUrl || null,
+        demoUrl: formData.demoUrl || null,
+      };
+
+      if (project) {
+        await projectService.updateProject(project.id, data);
+      } else {
+        await projectService.createProject(data);
+      }
+
+      onSave();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || '저장에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {project ? '프로젝트 수정' : '새 프로젝트'}
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              제목 *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Slug * (URL 경로용, 예: my-project)
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.slug}
+              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              요약 *
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={formData.summary}
+              onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                시작일 *
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.startedAt}
+                onChange={(e) => setFormData({ ...formData, startedAt: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                종료일 (진행중이면 비워두세요)
+              </label>
+              <input
+                type="date"
+                value={formData.endedAt}
+                onChange={(e) => setFormData({ ...formData, endedAt: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              GitHub URL
+            </label>
+            <input
+              type="url"
+              value={formData.githubUrl}
+              onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Demo URL
+            </label>
+            <input
+              type="url"
+              value={formData.demoUrl}
+              onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isFeatured"
+              checked={formData.isFeatured}
+              onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isFeatured" className="ml-2 block text-sm text-gray-700">
+              Featured 프로젝트로 표시
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
