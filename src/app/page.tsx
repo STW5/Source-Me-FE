@@ -118,6 +118,7 @@ export default function Home() {
               <a href="#home" className="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
               <a href="#projects" className="text-gray-600 hover:text-gray-900 transition-colors">Projects</a>
+              <a href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">Blog</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
 
               {isAuthenticated ? (
