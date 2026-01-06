@@ -138,6 +138,19 @@ export default function BlogDetailPage() {
           {post.summary && (
             <p className="mt-4 text-xl text-gray-600 leading-relaxed">{post.summary}</p>
           )}
+
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {post.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
         </header>
 
         <div className="markdown-content">

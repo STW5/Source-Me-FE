@@ -1,3 +1,5 @@
+import { Tag } from './tag';
+
 export interface BlogPost {
   id: string; // UUID
   title: string;
@@ -7,6 +9,7 @@ export interface BlogPost {
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
+  tags: Tag[];
 }
 
 export interface BlogPostListItem {
@@ -17,6 +20,7 @@ export interface BlogPostListItem {
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
+  tags: Tag[];
 }
 
 export interface BlogPostCreateRequest {
@@ -24,6 +28,7 @@ export interface BlogPostCreateRequest {
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
+  tagIds: number[];
 }
 
 export interface BlogPostUpdateRequest {
@@ -31,4 +36,5 @@ export interface BlogPostUpdateRequest {
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
+  tagIds: number[];
 }

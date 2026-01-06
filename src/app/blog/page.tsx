@@ -144,6 +144,19 @@ export default function BlogListPage() {
                   <p className="text-gray-600 mb-4 line-clamp-2">{post.summary}</p>
                 )}
 
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {post.tags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <time dateTime={post.publishedAt || post.createdAt}>
                     {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}

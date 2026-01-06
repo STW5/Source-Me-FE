@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
+import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
 import { BlogPost, BlogPostUpdateRequest } from '@/types/blog';
+import { Tag } from '@/types/tag';
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -17,7 +19,9 @@ export default function EditBlogPage() {
     summary: '',
     contentMarkdown: '',
     status: 'DRAFT',
+    tagIds: [],
   });
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +34,18 @@ export default function EditBlogPage() {
       return;
     }
 
+    fetchTags();
     fetchPost();
   }, [id, router]);
+
+  const fetchTags = async () => {
+    try {
+      const data = await tagService.getAllTags();
+      setTags(data);
+    } catch (err) {
+      console.error('Failed to fetch tags:', err);
+    }
+  };
 
   const fetchPost = async () => {
     try {
@@ -43,6 +57,7 @@ export default function EditBlogPage() {
         summary: data.summary || '',
         contentMarkdown: data.contentMarkdown,
         status: data.status,
+        tagIds: data.tags.map(tag => tag.id),
       });
     } catch (err: any) {
       setError('블로그 글을 불러오는데 실패했습니다.');
@@ -50,6 +65,15 @@ export default function EditBlogPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleTag = (tagId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tagIds: prev.tagIds.includes(tagId)
+        ? prev.tagIds.filter(id => id !== tagId)
+        : [...prev.tagIds, tagId]
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
@@ -158,6 +182,32 @@ export default function EditBlogPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono"
               placeholder="블로그 본문을 Markdown 형식으로 작성하세요"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              태그
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {tags.length === 0 ? (
+                <p className="text-sm text-gray-500">등록된 태그가 없습니다.</p>
+              ) : (
+                tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      formData.tagIds.includes(tag.id)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {tag.name}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">

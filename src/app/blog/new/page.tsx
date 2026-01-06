@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { blogService } from '@/services/blogService';
+import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
 import { BlogPostCreateRequest } from '@/types/blog';
+import { Tag } from '@/types/tag';
 
 export default function NewBlogPage() {
   const router = useRouter();
@@ -13,7 +15,9 @@ export default function NewBlogPage() {
     summary: '',
     contentMarkdown: '',
     status: 'DRAFT',
+    tagIds: [],
   });
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +26,30 @@ export default function NewBlogPage() {
     if (!authToken.isAuthenticated()) {
       alert('로그인이 필요합니다.');
       router.push('/');
+      return;
     }
+
+    // Fetch tags
+    fetchTags();
   }, [router]);
+
+  const fetchTags = async () => {
+    try {
+      const data = await tagService.getAllTags();
+      setTags(data);
+    } catch (err) {
+      console.error('Failed to fetch tags:', err);
+    }
+  };
+
+  const toggleTag = (tagId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tagIds: prev.tagIds.includes(tagId)
+        ? prev.tagIds.filter(id => id !== tagId)
+        : [...prev.tagIds, tagId]
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
     e.preventDefault();
@@ -106,6 +132,32 @@ export default function NewBlogPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono"
               placeholder="블로그 본문을 Markdown 형식으로 작성하세요"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              태그
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {tags.length === 0 ? (
+                <p className="text-sm text-gray-500">등록된 태그가 없습니다.</p>
+              ) : (
+                tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      formData.tagIds.includes(tag.id)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {tag.name}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">
