@@ -10,7 +10,6 @@ export default function NewBlogPage() {
   const router = useRouter();
   const [formData, setFormData] = useState<BlogPostCreateRequest>({
     title: '',
-    slug: '',
     summary: '',
     contentMarkdown: '',
     status: 'DRAFT',
@@ -25,22 +24,6 @@ export default function NewBlogPage() {
       router.push('/');
     }
   }, [router]);
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 100);
-  };
-
-  const handleTitleChange = (title: string) => {
-    setFormData({
-      ...formData,
-      title,
-      slug: formData.slug === '' ? generateSlug(title) : formData.slug,
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
     e.preventDefault();
@@ -92,27 +75,10 @@ export default function NewBlogPage() {
               type="text"
               required
               value={formData.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               placeholder="블로그 글 제목을 입력하세요"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Slug * (URL 경로용)
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-              placeholder="my-blog-post"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              URL: /blog/{formData.slug || 'my-blog-post'}
-            </p>
           </div>
 
           <div>

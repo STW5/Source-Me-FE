@@ -1,7 +1,6 @@
 export interface BlogPost {
-  id: number;
+  id: string; // UUID
   title: string;
-  slug: string;
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
@@ -11,9 +10,8 @@ export interface BlogPost {
 }
 
 export interface BlogPostListItem {
-  id: number;
+  id: string; // UUID
   title: string;
-  slug: string;
   summary?: string;
   status: 'DRAFT' | 'PUBLISHED';
   publishedAt?: string;
@@ -23,7 +21,6 @@ export interface BlogPostListItem {
 
 export interface BlogPostCreateRequest {
   title: string;
-  slug: string;
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
@@ -31,7 +28,6 @@ export interface BlogPostCreateRequest {
 
 export interface BlogPostUpdateRequest {
   title: string;
-  slug: string;
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';

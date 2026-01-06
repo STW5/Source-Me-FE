@@ -9,12 +9,11 @@ import { BlogPost, BlogPostUpdateRequest } from '@/types/blog';
 export default function EditBlogPage() {
   const router = useRouter();
   const params = useParams();
-  const id = parseInt(params.id as string);
+  const id = params.id as string;
 
   const [post, setPost] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<BlogPostUpdateRequest>({
     title: '',
-    slug: '',
     summary: '',
     contentMarkdown: '',
     status: 'DRAFT',
@@ -41,7 +40,6 @@ export default function EditBlogPage() {
       setPost(data);
       setFormData({
         title: data.title,
-        slug: data.slug,
         summary: data.summary || '',
         contentMarkdown: data.contentMarkdown,
         status: data.status,
@@ -133,23 +131,6 @@ export default function EditBlogPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               placeholder="블로그 글 제목을 입력하세요"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Slug * (URL 경로용)
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-              placeholder="my-blog-post"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              URL: /blog/{formData.slug || 'my-blog-post'}
-            </p>
           </div>
 
           <div>

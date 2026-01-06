@@ -51,7 +51,7 @@ export default function BlogListPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('정말 이 글을 삭제하시겠습니까?')) return;
 
     try {
@@ -127,7 +127,7 @@ export default function BlogListPage() {
               <article
                 key={post.id}
                 className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
-                onClick={() => router.push(`/blog/${post.slug}`)}
+                onClick={() => router.push(`/blog/${post.id}`)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <h2 className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">

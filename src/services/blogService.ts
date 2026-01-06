@@ -50,14 +50,8 @@ export const blogService = {
   },
 
   // Get post by ID
-  async getPost(id: number): Promise<BlogPost> {
+  async getPost(id: string): Promise<BlogPost> {
     const response = await blogApi.get<ApiResponse<BlogPost>>(`/blog/posts/${id}`);
-    return response.data.data;
-  },
-
-  // Get post by slug (public)
-  async getPostBySlug(slug: string): Promise<BlogPost> {
-    const response = await blogApi.get<ApiResponse<BlogPost>>(`/blog/posts/slug/${slug}`);
     return response.data.data;
   },
 
@@ -68,13 +62,13 @@ export const blogService = {
   },
 
   // Update post (requires auth)
-  async updatePost(id: number, data: BlogPostUpdateRequest): Promise<BlogPost> {
+  async updatePost(id: string, data: BlogPostUpdateRequest): Promise<BlogPost> {
     const response = await blogApi.put<ApiResponse<BlogPost>>(`/blog/posts/${id}`, data);
     return response.data.data;
   },
 
   // Delete post (requires auth)
-  async deletePost(id: number): Promise<void> {
+  async deletePost(id: string): Promise<void> {
     await blogApi.delete(`/blog/posts/${id}`);
   },
 };

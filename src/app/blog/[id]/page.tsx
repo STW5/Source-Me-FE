@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { blogService } from '@/services/blogService';
 import { authToken } from '@/lib/auth';
 import { BlogPost } from '@/types/blog';
@@ -9,7 +11,7 @@ import { BlogPost } from '@/types/blog';
 export default function BlogDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const slug = params.slug as string;
+  const id = params.id as string;
 
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,12 +21,12 @@ export default function BlogDetailPage() {
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
     fetchPost();
-  }, [slug]);
+  }, [id]);
 
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const data = await blogService.getPostBySlug(slug);
+      const data = await blogService.getPost(id);
       setPost(data);
     } catch (err: any) {
       setError('블로그 글을 찾을 수 없습니다.');
@@ -138,10 +140,30 @@ export default function BlogDetailPage() {
           )}
         </header>
 
-        <div className="prose prose-lg max-w-none">
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+        <div className="markdown-content">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h1: ({node, ...props}) => <h1 className="text-4xl font-bold text-gray-900 mt-8 mb-4 first:mt-0" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-3xl font-bold text-gray-900 mt-8 mb-4" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-2xl font-bold text-gray-900 mt-6 mb-3" {...props} />,
+              p: ({node, ...props}) => <p className="text-gray-900 text-lg leading-relaxed mb-4" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc list-inside text-gray-900 text-lg space-y-2 mb-4 ml-4" {...props} />,
+              ol: ({node, ...props}) => <ol className="list-decimal list-inside text-gray-900 text-lg space-y-2 mb-4 ml-4" {...props} />,
+              li: ({node, ...props}) => <li className="text-gray-900" {...props} />,
+              a: ({node, ...props}) => <a className="text-blue-600 hover:text-blue-700 hover:underline" {...props} />,
+              strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+              em: ({node, ...props}) => <em className="italic text-gray-900" {...props} />,
+              code: ({node, inline, ...props}: any) =>
+                inline
+                  ? <code className="bg-pink-50 text-pink-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
+                  : <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono my-4" {...props} />,
+              pre: ({node, ...props}) => <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4" {...props} />,
+              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-700 my-4" {...props} />,
+            }}
+          >
             {post.contentMarkdown}
-          </div>
+          </ReactMarkdown>
         </div>
       </article>
     </div>
