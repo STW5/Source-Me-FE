@@ -28,7 +28,7 @@ export interface BlogPostCreateRequest {
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
-  tagIds: number[];
+  tagNames: string[];
 }
 
 export interface BlogPostUpdateRequest {
@@ -36,5 +36,5 @@ export interface BlogPostUpdateRequest {
   summary?: string;
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
-  tagIds: number[];
+  tagNames: string[];
 }

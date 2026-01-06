@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
-import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
 import { BlogPost, BlogPostUpdateRequest } from '@/types/blog';
-import { Tag } from '@/types/tag';
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -19,9 +17,9 @@ export default function EditBlogPage() {
     summary: '',
     contentMarkdown: '',
     status: 'DRAFT',
-    tagIds: [],
+    tagNames: [],
   });
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,31 +32,23 @@ export default function EditBlogPage() {
       return;
     }
 
-    fetchTags();
     fetchPost();
   }, [id, router]);
-
-  const fetchTags = async () => {
-    try {
-      const data = await tagService.getAllTags();
-      setTags(data);
-    } catch (err) {
-      console.error('Failed to fetch tags:', err);
-    }
-  };
 
   const fetchPost = async () => {
     try {
       setLoading(true);
       const data = await blogService.getPost(id);
       setPost(data);
+      const tagNames = data.tags.map(tag => tag.name);
       setFormData({
         title: data.title,
         summary: data.summary || '',
         contentMarkdown: data.contentMarkdown,
         status: data.status,
-        tagIds: data.tags.map(tag => tag.id),
+        tagNames: tagNames,
       });
+      setTagInput(tagNames.join(', '));
     } catch (err: any) {
       setError('블로그 글을 불러오는데 실패했습니다.');
       console.error('Failed to fetch post:', err);
@@ -67,13 +57,10 @@ export default function EditBlogPage() {
     }
   };
 
-  const toggleTag = (tagId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      tagIds: prev.tagIds.includes(tagId)
-        ? prev.tagIds.filter(id => id !== tagId)
-        : [...prev.tagIds, tagId]
-    }));
+  const handleTagInput = (value: string) => {
+    setTagInput(value);
+    const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    setFormData(prev => ({ ...prev, tagNames: tags }));
   };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
@@ -186,28 +173,27 @@ export default function EditBlogPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              태그
+              태그 (콤마로 구분)
             </label>
-            <div className="flex flex-wrap gap-2">
-              {tags.length === 0 ? (
-                <p className="text-sm text-gray-500">등록된 태그가 없습니다.</p>
-              ) : (
-                tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => toggleTag(tag.id)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      formData.tagIds.includes(tag.id)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => handleTagInput(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              placeholder="예: React, TypeScript, Web Development"
+            />
+            {formData.tagNames.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.tagNames.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
                   >
-                    {tag.name}
-                  </button>
-                ))
-              )}
-            </div>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">

@@ -55,6 +55,10 @@ export default function BlogDetailPage() {
     });
   };
 
+  const handleTagClick = (tagName: string) => {
+    router.push(`/blog?tag=${encodeURIComponent(tagName)}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -142,12 +146,13 @@ export default function BlogDetailPage() {
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
               {post.tags.map((tag) => (
-                <span
+                <button
                   key={tag.id}
-                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                  onClick={() => handleTagClick(tag.name)}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
                 >
                   {tag.name}
-                </span>
+                </button>
               ))}
             </div>
           )}

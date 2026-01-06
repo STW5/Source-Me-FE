@@ -284,6 +284,18 @@ export default function Home() {
                       )}
                     </div>
                     <p className="text-gray-600 mb-4">{project.summary}</p>
+                    {project.tags && project.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {project.tags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex gap-2 mb-4">
                       {project.githubUrl && (
                         <a
@@ -535,9 +547,22 @@ function ProjectFormModal({
     featuredOrder: 0,
     githubUrl: project?.githubUrl || '',
     demoUrl: project?.demoUrl || '',
+    tagNames: project?.tags?.map((tag) => tag.name) || [],
   });
+  const [tagInput, setTagInput] = useState(
+    project?.tags?.map((tag) => tag.name).join(', ') || ''
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleTagInput = (value: string) => {
+    setTagInput(value);
+    const tags = value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+    setFormData((prev) => ({ ...prev, tagNames: tags }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -670,6 +695,31 @@ function ProjectFormModal({
               onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              태그 (쉼표로 구분)
+            </label>
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => handleTagInput(e.target.value)}
+              placeholder="예: React, Spring, AWS"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+            {formData.tagNames.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.tagNames.map((tag, index) => (
+                  <span
+                    key={`${tag}-${index}`}
+                    className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center">

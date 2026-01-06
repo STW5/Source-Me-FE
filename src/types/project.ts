@@ -1,3 +1,5 @@
+import { Tag } from './tag';
+
 export interface Project {
   id: number;
   title: string;
@@ -11,6 +13,7 @@ export interface Project {
   featuredOrder: number;
   githubUrl?: string;
   demoUrl?: string;
+  tags?: Tag[];
 }
 
 export interface ProjectCreateRequest {
@@ -25,4 +28,5 @@ export interface ProjectCreateRequest {
   featuredOrder: number;
   githubUrl?: string | null;
   demoUrl?: string | null;
+  tagNames?: string[];
 }
