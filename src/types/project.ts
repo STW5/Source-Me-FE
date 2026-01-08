@@ -1,3 +1,4 @@
+import { MediaFile } from './media';
 import { Tag } from './tag';
 
 export interface Project {
@@ -14,6 +15,7 @@ export interface Project {
   githubUrl?: string;
   demoUrl?: string;
   tags?: Tag[];
+  thumbnailMedia?: MediaFile | null;
 }
 
 export interface ProjectCreateRequest {
@@ -29,4 +31,5 @@ export interface ProjectCreateRequest {
   githubUrl?: string | null;
   demoUrl?: string | null;
   tagNames?: string[];
+  thumbnailMediaId?: number | null;
 }

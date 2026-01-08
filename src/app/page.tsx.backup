@@ -1,0 +1,192 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { profileService } from '@/services/profileService';
+import { projectService } from '@/services/projectService';
+import { authService } from '@/services/authService';
+import { authToken } from '@/lib/auth';
+import { mediaService } from '@/services/mediaService';
+import { SiteProfile } from '@/types/profile';
+import { Project } from '@/types/project';
+import ProfileEditModal from '@/components/ProfileEditModal';
+import { MediaUploadResponse } from '@/types/media';
+import { FileUpload } from '@/components/FileUpload';
+
+export default function Home() {
+  const [profile, setProfile] = useState<SiteProfile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check authentication status
+    setIsAuthenticated(authToken.isAuthenticated());
+
+    const fetchData = async () => {
+      try {
+        const [profileData, projectsData] = await Promise.all([
+          profileService.getProfile(),
+          projectService.getProjects()
+        ]);
+        setProfile(profileData);
+        setProjects(projectsData);
+      } catch (err) {
+        setError('데이터를 불러오는데 실패했습니다.');
+        console.error('Failed to fetch data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const refreshProjects = async () => {
+    try {
+      const projectsData = await projectService.getProjects();
+      setProjects(projectsData);
+    } catch (err) {
+      console.error('Failed to refresh projects:', err);
+    }
+  };
+
+  const handleCreateProject = () => {
+    setEditingProject(null);
+    setShowModal(true);
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowModal(true);
+  };
+
+  const handleDeleteProject = async (id: number) => {
+    if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return;
+
+    try {
+      await projectService.deleteProject(id);
+      await refreshProjects();
+    } catch (err: any) {
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  const handleLogout = () => {
+    authToken.remove();
+    setIsAuthenticated(false);
+    setEditMode(false);
+  };
+
+  const handleLoginClick = () => {
+    if (isAuthenticated) {
+      // If already logged in, toggle edit mode
+      setEditMode(!editMode);
+    } else {
+      // If not logged in, show login modal
+      setShowLoginModal(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-lg text-gray-600">Loading...</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              프로젝트 미디어
+            </label>
+            <FileUpload
+              onUpload={handleMediaUpload}
+              onError={(err) => setError(err)}
+              options={{
+                multiple: true,
+                accept: 'image/*,.pdf,.doc,.docx',
+                maxFiles: 10
+              }}
+              className="mb-4"
+            />
+            
+            {/* Uploaded Media Preview */}
+            {uploadedMedia.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                {uploadedMedia.map((media, index) => (
+                  <div key={index} className="relative group">
+                    {mediaService.isImageFile(media.mimeType) ? (
+                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                        <img
+                          src={mediaService.getFileUrl(media.fileKey)}
+                          alt={media.originalFileName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-square bg-gray-50 rounded-lg flex flex-col items-center justify-center p-2">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <p className="text-xs text-gray-600 text-center truncate">{media.originalFileName}</p>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeMedia(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isFeatured"
+              checked={formData.isFeatured}
+              onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isFeatured" className="ml-2 block text-sm text-gray-700">
+              Featured 프로젝트로 표시
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

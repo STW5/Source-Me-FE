@@ -1,3 +1,5 @@
+import type { MediaFile } from './media';
+
 export interface SiteProfile {
   id: number;
   displayName: string;
@@ -7,6 +9,18 @@ export interface SiteProfile {
   githubUrl?: string;
   linkedinUrl?: string;
   resumeUrl?: string;
+  profileMedia?: MediaFile | null;
+}
+
+export interface ProfileUpdateRequest {
+  displayName: string;
+  headline: string;
+  bioMarkdown: string;
+  email?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  resumeUrl?: string;
+  profilePictureId?: number | null;
 }
 
 export interface ApiResponse<T> {

@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ProfileEditModal from '@/components/ProfileEditModal';
+import { SingleFileUpload } from '@/components/FileUpload';
 import { profileService } from '@/services/profileService';
 import { projectService } from '@/services/projectService';
 import { authService } from '@/services/authService';
 import { authToken } from '@/lib/auth';
+import { mediaService } from '@/services/mediaService';
 import { SiteProfile } from '@/types/profile';
 import { Project } from '@/types/project';
 
@@ -15,6 +18,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -107,6 +111,10 @@ export default function Home() {
     );
   }
 
+  const profileImageUrl = profile.profileMedia
+    ? mediaService.getMediaUrl(profile.profileMedia)
+    : null;
+
   return (
     <div className="bg-white">
       {/* Navigation */}
@@ -188,11 +196,36 @@ export default function Home() {
       {/* About Section */}
       <section id="about" className="min-h-screen flex items-center justify-center py-20 bg-white">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">About Me</h2>
+          <div className="flex items-center justify-between mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">About Me</h2>
+            {isAuthenticated && editMode && (
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                프로필 수정
+              </button>
+            )}
+          </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow border border-gray-100">
             <div className="grid md:grid-cols-2 gap-8">
               <div>
+                <div className="mb-6">
+                  {profileImageUrl ? (
+                    <img
+                      src={profileImageUrl}
+                      alt={`${profile.displayName} 프로필 사진`}
+                      className="h-32 w-32 rounded-full object-cover border-4 border-gray-200"
+                    />
+                  ) : (
+                    <div className="h-32 w-32 bg-gray-200 rounded-full flex items-center justify-center">
+                      <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">{profile.displayName}</h3>
                 <p className="text-lg text-gray-600 mb-4">{profile.headline}</p>
                 <div className="prose prose-lg">
@@ -271,8 +304,16 @@ export default function Home() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => (
                 <div key={project.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                    <span className="text-4xl">🚀</span>
+                  <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden">
+                    {project.thumbnailMedia ? (
+                      <img
+                        src={mediaService.getMediaUrl(project.thumbnailMedia) || ''}
+                        alt={`${project.title} 썸네일`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl">🚀</span>
+                    )}
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-2">
@@ -422,6 +463,15 @@ export default function Home() {
         />
       )}
 
+      {/* Profile Edit Modal */}
+      {showProfileModal && (
+        <ProfileEditModal
+          profile={profile}
+          onClose={() => setShowProfileModal(false)}
+          onSave={(updatedProfile) => setProfile(updatedProfile)}
+        />
+      )}
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-4 text-center">
@@ -548,6 +598,7 @@ function ProjectFormModal({
     githubUrl: project?.githubUrl || '',
     demoUrl: project?.demoUrl || '',
     tagNames: project?.tags?.map((tag) => tag.name) || [],
+    thumbnailMediaId: project?.thumbnailMedia?.id ?? null,
   });
   const [tagInput, setTagInput] = useState(
     project?.tags?.map((tag) => tag.name).join(', ') || ''
@@ -589,6 +640,14 @@ function ProjectFormModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleThumbnailUpload = (file: { id: number }) => {
+    setFormData((prev) => ({ ...prev, thumbnailMediaId: file.id }));
+  };
+
+  const handleThumbnailClear = () => {
+    setFormData((prev) => ({ ...prev, thumbnailMediaId: null }));
   };
 
   return (
@@ -643,6 +702,19 @@ function ProjectFormModal({
               value={formData.summary}
               onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              프로젝트 썸네일
+            </label>
+            <SingleFileUpload
+              onUpload={handleThumbnailUpload}
+              onError={(err) => setError(err)}
+              currentFile={project?.thumbnailMedia ?? null}
+              accept="image/*"
+              onClear={handleThumbnailClear}
             />
           </div>
 
