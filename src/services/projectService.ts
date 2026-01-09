@@ -1,10 +1,16 @@
 import api from '@/lib/api';
 import { ApiResponse } from '@/types/profile';
 import { Project, ProjectCreateRequest } from '@/types/project';
+import { PageResponse, SearchRequest } from '@/types/common';
 
 export const projectService = {
   async getProjects(): Promise<Project[]> {
     const response = await api.get<ApiResponse<Project[]>>('/projects');
+    return response.data.data;
+  },
+
+  async searchProjects(params: SearchRequest): Promise<PageResponse<Project>> {
+    const response = await api.get<ApiResponse<PageResponse<Project>>>('/projects/search', { params });
     return response.data.data;
   },
 

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { authToken } from '@/lib/auth';
 import { ApiResponse } from '@/types/profile';
 import { BlogPost, BlogPostListItem, BlogPostCreateRequest, BlogPostUpdateRequest } from '@/types/blog';
+import { PageResponse, SearchRequest } from '@/types/common';
 
 // Create a separate axios instance for blog API since it uses /api/blog instead of /api/v1
 const blogApi = axios.create({
@@ -48,6 +49,12 @@ export const blogService = {
   async getAllPosts(tag?: string): Promise<BlogPostListItem[]> {
     const params = tag ? { tag } : {};
     const response = await blogApi.get<ApiResponse<BlogPostListItem[]>>('/blog/admin/posts', { params });
+    return response.data.data;
+  },
+
+  // Search published posts (public)
+  async searchPublishedPosts(params: SearchRequest): Promise<PageResponse<BlogPostListItem>> {
+    const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>('/blog/posts/search', { params });
     return response.data.data;
   },
 

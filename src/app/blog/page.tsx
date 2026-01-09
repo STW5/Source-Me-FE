@@ -7,17 +7,23 @@ import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
 import { BlogPostListItem } from '@/types/blog';
 import { Tag } from '@/types/tag';
+import { PageResponse } from '@/types/common';
 
 export default function BlogListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedTag = searchParams.get('tag')?.trim() || '';
   const [posts, setPosts] = useState<BlogPostListItem[]>([]);
+  const [postPage, setPostPage] = useState<PageResponse<BlogPostListItem> | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagsError, setTagsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [useSearch, setUseSearch] = useState(false);
 
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
@@ -25,8 +31,20 @@ export default function BlogListPage() {
   }, []);
 
   useEffect(() => {
-    fetchPosts(selectedTag);
-  }, [selectedTag]);
+    if (selectedTag) {
+      // 태그 필터가 있으면 기존 방식 사용 (검색 비활성화)
+      setUseSearch(false);
+      setSearchKeyword('');
+      setSearchInput('');
+      fetchPosts(selectedTag);
+    } else if (useSearch) {
+      // 검색 모드
+      fetchPostsWithSearch();
+    } else {
+      // 기본 모드 (태그 필터 없음)
+      fetchPosts();
+    }
+  }, [selectedTag, currentPage, searchKeyword, useSearch]);
 
   const fetchTags = async () => {
     try {
@@ -63,12 +81,49 @@ export default function BlogListPage() {
       }
 
       setPosts(data);
+      setPostPage(null); // 기존 방식에서는 페이징 정보 없음
     } catch (err: any) {
       setError('블로그 글을 불러오는데 실패했습니다.');
       console.error('Failed to fetch posts:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPostsWithSearch = async () => {
+    try {
+      setLoading(true);
+      const pageData = await blogService.searchPublishedPosts({
+        keyword: searchKeyword || undefined,
+        page: currentPage,
+        size: 10,
+        sortBy: 'createdAt',
+        sortDir: 'desc'
+      });
+      setPostPage(pageData);
+      setPosts(pageData.content);
+    } catch (err: any) {
+      setError('블로그 글을 불러오는데 실패했습니다.');
+      console.error('Failed to fetch posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchKeyword(searchInput);
+    setCurrentPage(0);
+    setUseSearch(true);
+    // 검색 시 태그 필터 제거
+    if (selectedTag) {
+      router.push('/blog');
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -191,6 +246,44 @@ export default function BlogListPage() {
           )}
         </div>
 
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="mb-8">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="블로그 검색 (제목, 내용, 요약, 태그)..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              검색
+            </button>
+            {searchKeyword && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput('');
+                  setSearchKeyword('');
+                  setCurrentPage(0);
+                  setUseSearch(false);
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                초기화
+              </button>
+            )}
+          </div>
+          {searchKeyword && (
+            <p className="mt-2 text-sm text-gray-600">
+              "{searchKeyword}" 검색 결과: {postPage?.totalElements || 0}개
+            </p>
+          )}
+        </form>
+
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600">
@@ -261,6 +354,68 @@ export default function BlogListPage() {
                 </div>
               </article>
             ))}
+
+            {/* Pagination */}
+            {postPage && postPage.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={postPage.first}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    postPage.first
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  이전
+                </button>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, postPage.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (postPage.totalPages <= 5) {
+                      pageNum = i;
+                    } else if (currentPage < 3) {
+                      pageNum = i;
+                    } else if (currentPage > postPage.totalPages - 4) {
+                      pageNum = postPage.totalPages - 5 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 rounded-lg transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={postPage.last}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    postPage.last
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  다음
+                </button>
+
+                <span className="ml-4 text-sm text-gray-600">
+                  {currentPage + 1} / {postPage.totalPages} 페이지
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

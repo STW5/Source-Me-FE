@@ -10,10 +10,15 @@ import { authToken } from '@/lib/auth';
 import { mediaService } from '@/services/mediaService';
 import { SiteProfile } from '@/types/profile';
 import { Project } from '@/types/project';
+import { PageResponse } from '@/types/common';
 
 export default function Home() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectPage, setProjectPage] = useState<PageResponse<Project> | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -29,12 +34,8 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        const [profileData, projectsData] = await Promise.all([
-          profileService.getProfile(),
-          projectService.getProjects()
-        ]);
+        const profileData = await profileService.getProfile();
         setProfile(profileData);
-        setProjects(projectsData);
       } catch (err) {
         setError('데이터를 불러오는데 실패했습니다.');
         console.error('Failed to fetch data:', err);
@@ -46,13 +47,40 @@ export default function Home() {
     fetchData();
   }, []);
 
-  const refreshProjects = async () => {
+  useEffect(() => {
+    fetchProjects();
+  }, [currentPage, searchKeyword]);
+
+  const fetchProjects = async () => {
     try {
-      const projectsData = await projectService.getProjects();
-      setProjects(projectsData);
+      const pageData = await projectService.searchProjects({
+        keyword: searchKeyword || undefined,
+        page: currentPage,
+        size: 9,
+        sortBy: 'createdAt',
+        sortDir: 'desc'
+      });
+      setProjectPage(pageData);
+      setProjects(pageData.content);
     } catch (err) {
-      console.error('Failed to refresh projects:', err);
+      console.error('Failed to fetch projects:', err);
     }
+  };
+
+  const refreshProjects = async () => {
+    await fetchProjects();
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchKeyword(searchInput);
+    setCurrentPage(0);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    // 페이지 변경 시 프로젝트 섹션으로 스크롤
+    document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleCreateProject = () => {
@@ -286,7 +314,7 @@ export default function Home() {
       {/* Projects Section */}
       <section id="projects" className="min-h-screen flex items-center justify-center py-20 bg-gray-50">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex justify-between items-center mb-8">
             <h2 className="text-4xl font-bold text-gray-900">Projects</h2>
             {isAuthenticated && editMode && (
               <button
@@ -298,9 +326,49 @@ export default function Home() {
             )}
           </div>
 
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="mb-8">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="프로젝트 검색 (제목, 요약, 태그)..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                검색
+              </button>
+              {searchKeyword && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchKeyword('');
+                    setCurrentPage(0);
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  초기화
+                </button>
+              )}
+            </div>
+            {searchKeyword && (
+              <p className="mt-2 text-sm text-gray-600">
+                "{searchKeyword}" 검색 결과: {projectPage?.totalElements || 0}개
+              </p>
+            )}
+          </form>
+
           {projects.length === 0 ? (
-            <p className="text-center text-gray-600">프로젝트가 없습니다.</p>
+            <p className="text-center text-gray-600">
+              {searchKeyword ? '검색 결과가 없습니다.' : '프로젝트가 없습니다.'}
+            </p>
           ) : (
+            <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => (
                 <div key={project.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
@@ -386,6 +454,69 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {projectPage && projectPage.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-12">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={projectPage.first}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    projectPage.first
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  이전
+                </button>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, projectPage.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (projectPage.totalPages <= 5) {
+                      pageNum = i;
+                    } else if (currentPage < 3) {
+                      pageNum = i;
+                    } else if (currentPage > projectPage.totalPages - 4) {
+                      pageNum = projectPage.totalPages - 5 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 rounded-lg transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={projectPage.last}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    projectPage.last
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  다음
+                </button>
+
+                <span className="ml-4 text-sm text-gray-600">
+                  {currentPage + 1} / {projectPage.totalPages} 페이지
+                </span>
+              </div>
+            )}
+            </>
           )}
         </div>
       </section>
