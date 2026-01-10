@@ -331,9 +331,17 @@ export default function BlogListPage() {
                 )}
 
                 <div className="flex items-center justify-between text-sm text-gray-500">
-                  <time dateTime={post.publishedAt || post.createdAt}>
-                    {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
-                  </time>
+                  <div className="flex items-center gap-4">
+                    <time dateTime={post.publishedAt || post.createdAt}>
+                      {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
+                    </time>
+                    <span className="flex items-center gap-1">
+                      👁️ {post.viewCount}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      ❤️ {post.likeCount}
+                    </span>
+                  </div>
 
                   {isAuthenticated && (
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>

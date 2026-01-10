@@ -9,6 +9,8 @@ export interface BlogPost {
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
+  viewCount: number;
+  likeCount: number;
   tags: Tag[];
 }
 
@@ -20,6 +22,8 @@ export interface BlogPostListItem {
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
+  viewCount: number;
+  likeCount: number;
   tags: Tag[];
 }
 

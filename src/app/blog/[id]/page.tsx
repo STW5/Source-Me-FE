@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { blogService } from '@/services/blogService';
+import { blogLikeService } from '@/services/blogLikeService';
+import { blogBookmarkService } from '@/services/blogBookmarkService';
 import { authToken } from '@/lib/auth';
 import { BlogPost } from '@/types/blog';
 
@@ -17,22 +19,86 @@ export default function BlogDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+
+  // Prevent duplicate view count increment in React StrictMode
+  const viewCountIncremented = useRef(false);
+
+  // TODO: Replace with actual user ID from authentication context
+  const userId = 1;
 
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
-    fetchPost();
+
+    let isCancelled = false;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch post data
+        const data = await blogService.getPost(id);
+        if (isCancelled) return;
+
+        setPost(data);
+        setLikeCount(data.likeCount);
+
+        // Increment view count only once per component mount
+        if (!viewCountIncremented.current) {
+          viewCountIncremented.current = true;
+          await blogService.incrementViewCount(id);
+        }
+
+        // Fetch interaction status
+        const [likeStatus, bookmarkStatus] = await Promise.all([
+          blogLikeService.checkLikeStatus(id, userId),
+          blogBookmarkService.checkBookmarkStatus(id, userId),
+        ]);
+        if (isCancelled) return;
+
+        setIsLiked(likeStatus.liked);
+        setIsBookmarked(bookmarkStatus.bookmarked);
+      } catch (err: any) {
+        if (isCancelled) return;
+        setError('블로그 글을 찾을 수 없습니다.');
+        console.error('Failed to fetch post:', err);
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isCancelled = true;
+      // Reset ref when component unmounts
+      viewCountIncremented.current = false;
+    };
   }, [id]);
 
-  const fetchPost = async () => {
+
+  const handleLikeToggle = async () => {
     try {
-      setLoading(true);
-      const data = await blogService.getPost(id);
-      setPost(data);
-    } catch (err: any) {
-      setError('블로그 글을 찾을 수 없습니다.');
-      console.error('Failed to fetch post:', err);
-    } finally {
-      setLoading(false);
+      const result = await blogLikeService.toggleLike(id, userId);
+      setIsLiked(result.liked);
+      setLikeCount(prev => result.liked ? prev + 1 : prev - 1);
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+      alert('좋아요 처리 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    try {
+      const result = await blogBookmarkService.toggleBookmark(id, userId);
+      setIsBookmarked(result.bookmarked);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+      alert('북마크 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -128,15 +194,46 @@ export default function BlogDetailPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-gray-600">
-            <time dateTime={post.publishedAt || post.createdAt}>
-              {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
-            </time>
-            {post.updatedAt && post.createdAt !== post.updatedAt && (
-              <span className="text-sm text-gray-500">
-                (수정됨: {formatDate(post.updatedAt)})
-              </span>
-            )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-gray-600">
+              <time dateTime={post.publishedAt || post.createdAt}>
+                {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
+              </time>
+              {post.updatedAt && post.createdAt !== post.updatedAt && (
+                <span className="text-sm text-gray-500">
+                  (수정됨: {formatDate(post.updatedAt)})
+                </span>
+              )}
+              <span className="text-sm text-gray-500">조회 {post.viewCount}</span>
+            </div>
+
+            {/* Like and Bookmark Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLikeToggle}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${
+                  isLiked
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={isLiked ? '좋아요 취소' : '좋아요'}
+              >
+                <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>
+                <span className="font-medium">{likeCount}</span>
+              </button>
+
+              <button
+                onClick={handleBookmarkToggle}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${
+                  isBookmarked
+                    ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={isBookmarked ? '북마크 취소' : '북마크'}
+              >
+                <span className="text-lg">{isBookmarked ? '⭐' : '☆'}</span>
+              </button>
+            </div>
           </div>
 
           {post.summary && (

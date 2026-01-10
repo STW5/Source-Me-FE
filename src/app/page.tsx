@@ -93,6 +93,20 @@ export default function Home() {
     setShowModal(true);
   };
 
+  const handleProjectClick = async (project: Project) => {
+    // Increment view count every time (no session restriction)
+    try {
+      await projectService.incrementViewCount(project.id);
+
+      // Refresh project list to show updated view count
+      await refreshProjects();
+    } catch (err) {
+      console.error('Failed to increment view count:', err);
+    }
+
+    // TODO: Navigate to project detail page or open modal
+  };
+
   const handleDeleteProject = async (id: number) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return;
 
@@ -371,7 +385,11 @@ export default function Home() {
             <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => (
-                <div key={project.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
+                <div
+                  key={project.id}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer"
+                  onClick={() => handleProjectClick(project)}
+                >
                   <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden">
                     {project.thumbnailMedia ? (
                       <img
@@ -411,6 +429,7 @@ export default function Home() {
                           href={project.githubUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                         >
                           GitHub →
@@ -421,11 +440,20 @@ export default function Home() {
                           href={project.demoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
                         >
                           Demo →
                         </a>
                       )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <span className="flex items-center gap-1">
+                        👁️ {project.viewCount}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        ❤️ {project.likeCount}
+                      </span>
                     </div>
                     {(project.startedAt || project.endedAt) && (
                       <p className="text-xs text-gray-500 mb-3">
@@ -435,15 +463,21 @@ export default function Home() {
                       </p>
                     )}
                     {editMode && (
-                      <div className="flex gap-2 pt-3 border-t border-gray-200">
+                      <div className="flex gap-2 pt-3 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={() => handleEditProject(project)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProject(project);
+                          }}
                           className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
                         >
                           수정
                         </button>
                         <button
-                          onClick={() => handleDeleteProject(project.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project.id);
+                          }}
                           className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
                         >
                           삭제

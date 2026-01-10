@@ -80,4 +80,25 @@ export const blogService = {
   async deletePost(id: string): Promise<void> {
     await blogApi.delete(`/blog/posts/${id}`);
   },
+
+  // Increment view count
+  async incrementViewCount(id: string): Promise<void> {
+    await blogApi.post(`/blog/posts/${id}/view`);
+  },
+
+  // Get popular posts (by view count)
+  async getPopularPosts(page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
+    const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>('/blog/posts/popular', {
+      params: { page, size }
+    });
+    return response.data.data;
+  },
+
+  // Get most liked posts
+  async getMostLikedPosts(page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
+    const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>('/blog/posts/most-liked', {
+      params: { page, size }
+    });
+    return response.data.data;
+  },
 };

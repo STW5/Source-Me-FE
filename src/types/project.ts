@@ -14,6 +14,8 @@ export interface Project {
   featuredOrder: number;
   githubUrl?: string;
   demoUrl?: string;
+  viewCount: number;
+  likeCount: number;
   tags?: Tag[];
   thumbnailMedia?: MediaFile | null;
 }
