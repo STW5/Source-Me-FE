@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
 import { authToken } from '@/lib/auth';
 import { BlogPost, BlogPostUpdateRequest } from '@/types/blog';
+import { SingleFileUpload } from '@/components/FileUpload';
+import { MediaUploadResponse } from '@/types/media';
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -18,11 +20,13 @@ export default function EditBlogPage() {
     contentMarkdown: '',
     status: 'DRAFT',
     tagNames: [],
+    thumbnailMediaId: null,
   });
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<MediaUploadResponse | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -47,8 +51,14 @@ export default function EditBlogPage() {
         contentMarkdown: data.contentMarkdown,
         status: data.status,
         tagNames: tagNames,
+        thumbnailMediaId: data.thumbnailMedia?.id || null,
       });
       setTagInput(tagNames.join(', '));
+
+      // 기존 썸네일이 있으면 설정
+      if (data.thumbnailMedia) {
+        setThumbnailFile(data.thumbnailMedia);
+      }
     } catch (err: any) {
       setError('블로그 글을 불러오는데 실패했습니다.');
       console.error('Failed to fetch post:', err);
@@ -61,6 +71,16 @@ export default function EditBlogPage() {
     setTagInput(value);
     const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
     setFormData(prev => ({ ...prev, tagNames: tags }));
+  };
+
+  const handleThumbnailUpload = (file: MediaUploadResponse) => {
+    setThumbnailFile(file);
+    setFormData(prev => ({ ...prev, thumbnailMediaId: file.id }));
+  };
+
+  const handleThumbnailClear = () => {
+    setThumbnailFile(null);
+    setFormData(prev => ({ ...prev, thumbnailMediaId: null }));
   };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
@@ -194,6 +214,19 @@ export default function EditBlogPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              썸네일 이미지 (선택)
+            </label>
+            <SingleFileUpload
+              onUpload={handleThumbnailUpload}
+              currentFile={thumbnailFile}
+              accept="image/*"
+              onClear={handleThumbnailClear}
+              onError={(error) => setError(error)}
+            />
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
 import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
+import { mediaService } from '@/services/mediaService';
 import { BlogPostListItem } from '@/types/blog';
 import { Tag } from '@/types/tag';
 import { PageResponse } from '@/types/common';
@@ -295,70 +296,86 @@ export default function BlogListPage() {
             {posts.map((post) => (
               <article
                 key={post.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
                 onClick={() => router.push(`/blog/${post.id}`)}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-                    {post.title}
-                  </h2>
-                  {post.status === 'DRAFT' && (
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
-                      초안
-                    </span>
-                  )}
-                </div>
-
-                {post.summary && (
-                  <p className="text-gray-600 mb-4 line-clamp-2">{post.summary}</p>
-                )}
-
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map((tag) => (
-                      <button
-                        key={tag.id}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleTagFilter(tag.name);
-                        }}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors"
-                      >
-                        {tag.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-4">
-                    <time dateTime={post.publishedAt || post.createdAt}>
-                      {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
-                    </time>
-                    <span className="flex items-center gap-1">
-                      👁️ {post.viewCount}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      ❤️ {post.likeCount}
-                    </span>
-                  </div>
-
-                  {isAuthenticated && (
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => router.push(`/blog/edit/${post.id}`)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                      >
-                        삭제
-                      </button>
+                <div className="flex gap-4 p-6">
+                  {/* Thumbnail - Left Side */}
+                  {post.thumbnailMedia && (
+                    <div className="flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
+                      <img
+                        src={mediaService.getMediaUrl(post.thumbnailMedia) || mediaService.getFileUrl(post.thumbnailMedia.fileKey)}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
+
+                  {/* Content - Right Side */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <h2 className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+                        {post.title}
+                      </h2>
+                      {post.status === 'DRAFT' && (
+                        <span className="flex-shrink-0 ml-2 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                          초안
+                        </span>
+                      )}
+                    </div>
+
+                    {post.summary && (
+                      <p className="text-gray-600 mb-4 line-clamp-2">{post.summary}</p>
+                    )}
+
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.map((tag) => (
+                          <button
+                            key={tag.id}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleTagFilter(tag.name);
+                            }}
+                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors"
+                          >
+                            {tag.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center gap-4">
+                        <time dateTime={post.publishedAt || post.createdAt}>
+                          {post.publishedAt ? formatDate(post.publishedAt) : formatDate(post.createdAt)}
+                        </time>
+                        <span className="flex items-center gap-1">
+                          👁️ {post.viewCount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          ❤️ {post.likeCount}
+                        </span>
+                      </div>
+
+                      {isAuthenticated && (
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => router.push(`/blog/edit/${post.id}`)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleDelete(post.id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </article>
             ))}

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { blogService } from '@/services/blogService';
 import { authToken } from '@/lib/auth';
 import { BlogPostCreateRequest } from '@/types/blog';
+import { SingleFileUpload } from '@/components/FileUpload';
+import { MediaUploadResponse } from '@/types/media';
 
 export default function NewBlogPage() {
   const router = useRouter();
@@ -14,10 +16,12 @@ export default function NewBlogPage() {
     contentMarkdown: '',
     status: 'DRAFT',
     tagNames: [],
+    thumbnailMediaId: null,
   });
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<MediaUploadResponse | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -32,6 +36,16 @@ export default function NewBlogPage() {
     // 콤마로 구분된 태그를 배열로 변환
     const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
     setFormData(prev => ({ ...prev, tagNames: tags }));
+  };
+
+  const handleThumbnailUpload = (file: MediaUploadResponse) => {
+    setThumbnailFile(file);
+    setFormData(prev => ({ ...prev, thumbnailMediaId: file.id }));
+  };
+
+  const handleThumbnailClear = () => {
+    setThumbnailFile(null);
+    setFormData(prev => ({ ...prev, thumbnailMediaId: null }));
   };
 
   const handleSubmit = async (e: React.FormEvent, status: 'DRAFT' | 'PUBLISHED') => {
@@ -140,6 +154,19 @@ export default function NewBlogPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              썸네일 이미지 (선택)
+            </label>
+            <SingleFileUpload
+              onUpload={handleThumbnailUpload}
+              currentFile={thumbnailFile}
+              accept="image/*"
+              onClear={handleThumbnailClear}
+              onError={(error) => setError(error)}
+            />
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">

@@ -1,3 +1,4 @@
+import { MediaFile } from './media';
 import { Tag } from './tag';
 
 export interface BlogPost {
@@ -12,6 +13,7 @@ export interface BlogPost {
   viewCount: number;
   likeCount: number;
   tags: Tag[];
+  thumbnailMedia?: MediaFile | null;
 }
 
 export interface BlogPostListItem {
@@ -25,6 +27,7 @@ export interface BlogPostListItem {
   viewCount: number;
   likeCount: number;
   tags: Tag[];
+  thumbnailMedia?: MediaFile | null;
 }
 
 export interface BlogPostCreateRequest {
@@ -33,6 +36,7 @@ export interface BlogPostCreateRequest {
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
   tagNames: string[];
+  thumbnailMediaId?: number | null;
 }
 
 export interface BlogPostUpdateRequest {
@@ -41,4 +45,5 @@ export interface BlogPostUpdateRequest {
   contentMarkdown: string;
   status: 'DRAFT' | 'PUBLISHED';
   tagNames: string[];
+  thumbnailMediaId?: number | null;
 }

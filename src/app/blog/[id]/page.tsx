@@ -8,6 +8,7 @@ import { blogService } from '@/services/blogService';
 import { blogLikeService } from '@/services/blogLikeService';
 import { blogBookmarkService } from '@/services/blogBookmarkService';
 import { authToken } from '@/lib/auth';
+import { mediaService } from '@/services/mediaService';
 import { BlogPost } from '@/types/blog';
 
 export default function BlogDetailPage() {
@@ -193,6 +194,16 @@ export default function BlogDetailPage() {
               </span>
             )}
           </div>
+
+          {post.thumbnailMedia && (
+            <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden mb-6">
+              <img
+                src={mediaService.getMediaUrl(post.thumbnailMedia) || mediaService.getFileUrl(post.thumbnailMedia.fileKey)}
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 text-gray-600">
