@@ -3,20 +3,17 @@ import { ApiResponse } from '@/types/profile';
 
 export const projectLikeService = {
   // Toggle like (add/remove)
-  async toggleLike(projectId: number, userId: number): Promise<{ liked: boolean }> {
+  async toggleLike(projectId: number): Promise<{ liked: boolean }> {
     const response = await api.post<ApiResponse<{ liked: boolean }>>(
-      `/projects/${projectId}/like`,
-      null,
-      { params: { userId } }
+      `/projects/${projectId}/like`
     );
     return response.data.data;
   },
 
   // Check if user liked the project
-  async checkLikeStatus(projectId: number, userId: number): Promise<{ liked: boolean }> {
+  async checkLikeStatus(projectId: number): Promise<{ liked: boolean }> {
     const response = await api.get<ApiResponse<{ liked: boolean }>>(
-      `/projects/${projectId}/like/status`,
-      { params: { userId } }
+      `/projects/${projectId}/like/status`
     );
     return response.data.data;
   },

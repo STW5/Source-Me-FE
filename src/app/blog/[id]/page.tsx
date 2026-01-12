@@ -27,9 +27,6 @@ export default function BlogDetailPage() {
   // Prevent duplicate view count increment in React StrictMode
   const viewCountIncremented = useRef(false);
 
-  // TODO: Replace with actual user ID from authentication context
-  const userId = 1;
-
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
 
@@ -52,15 +49,17 @@ export default function BlogDetailPage() {
           await blogService.incrementViewCount(id);
         }
 
-        // Fetch interaction status
-        const [likeStatus, bookmarkStatus] = await Promise.all([
-          blogLikeService.checkLikeStatus(id, userId),
-          blogBookmarkService.checkBookmarkStatus(id, userId),
-        ]);
-        if (isCancelled) return;
+        // Fetch interaction status (only if authenticated)
+        if (authToken.isAuthenticated()) {
+          const [likeStatus, bookmarkStatus] = await Promise.all([
+            blogLikeService.checkLikeStatus(id),
+            blogBookmarkService.checkBookmarkStatus(id),
+          ]);
+          if (isCancelled) return;
 
-        setIsLiked(likeStatus.liked);
-        setIsBookmarked(bookmarkStatus.bookmarked);
+          setIsLiked(likeStatus.liked);
+          setIsBookmarked(bookmarkStatus.bookmarked);
+        }
       } catch (err: any) {
         if (isCancelled) return;
         setError('블로그 글을 찾을 수 없습니다.');
@@ -83,8 +82,12 @@ export default function BlogDetailPage() {
 
 
   const handleLikeToggle = async () => {
+    if (!authToken.isAuthenticated()) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
     try {
-      const result = await blogLikeService.toggleLike(id, userId);
+      const result = await blogLikeService.toggleLike(id);
       setIsLiked(result.liked);
       setLikeCount(prev => result.liked ? prev + 1 : prev - 1);
     } catch (err) {
@@ -94,8 +97,12 @@ export default function BlogDetailPage() {
   };
 
   const handleBookmarkToggle = async () => {
+    if (!authToken.isAuthenticated()) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
     try {
-      const result = await blogBookmarkService.toggleBookmark(id, userId);
+      const result = await blogBookmarkService.toggleBookmark(id);
       setIsBookmarked(result.bookmarked);
     } catch (err) {
       console.error('Failed to toggle bookmark:', err);

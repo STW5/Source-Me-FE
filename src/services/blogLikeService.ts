@@ -37,20 +37,17 @@ blogApi.interceptors.response.use(
 
 export const blogLikeService = {
   // Toggle like (add/remove)
-  async toggleLike(postId: string, userId: number): Promise<{ liked: boolean }> {
+  async toggleLike(postId: string): Promise<{ liked: boolean }> {
     const response = await blogApi.post<ApiResponse<{ liked: boolean }>>(
-      `/blog/posts/${postId}/like`,
-      null,
-      { params: { userId } }
+      `/blog/posts/${postId}/like`
     );
     return response.data.data;
   },
 
   // Check if user liked the post
-  async checkLikeStatus(postId: string, userId: number): Promise<{ liked: boolean }> {
+  async checkLikeStatus(postId: string): Promise<{ liked: boolean }> {
     const response = await blogApi.get<ApiResponse<{ liked: boolean }>>(
-      `/blog/posts/${postId}/like/status`,
-      { params: { userId } }
+      `/blog/posts/${postId}/like/status`
     );
     return response.data.data;
   },

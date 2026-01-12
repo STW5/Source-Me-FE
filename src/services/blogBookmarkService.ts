@@ -39,29 +39,26 @@ blogApi.interceptors.response.use(
 
 export const blogBookmarkService = {
   // Toggle bookmark (add/remove)
-  async toggleBookmark(postId: string, userId: number): Promise<{ bookmarked: boolean }> {
+  async toggleBookmark(postId: string): Promise<{ bookmarked: boolean }> {
     const response = await blogApi.post<ApiResponse<{ bookmarked: boolean }>>(
-      `/blog/posts/${postId}/bookmark`,
-      null,
-      { params: { userId } }
+      `/blog/posts/${postId}/bookmark`
     );
     return response.data.data;
   },
 
   // Check if user bookmarked the post
-  async checkBookmarkStatus(postId: string, userId: number): Promise<{ bookmarked: boolean }> {
+  async checkBookmarkStatus(postId: string): Promise<{ bookmarked: boolean }> {
     const response = await blogApi.get<ApiResponse<{ bookmarked: boolean }>>(
-      `/blog/posts/${postId}/bookmark/status`,
-      { params: { userId } }
+      `/blog/posts/${postId}/bookmark/status`
     );
     return response.data.data;
   },
 
   // Get user's bookmarked posts
-  async getBookmarkedPosts(userId: number, page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
+  async getBookmarkedPosts(page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
     const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>(
       '/blog/bookmarks',
-      { params: { userId, page, size } }
+      { params: { page, size } }
     );
     return response.data.data;
   },
