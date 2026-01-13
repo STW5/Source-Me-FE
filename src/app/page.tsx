@@ -300,14 +300,14 @@ export default function Home() {
 
           {/* Skills & Experience - Inside About Section */}
           {(profile.careerGoal || profile.skillsProficient || profile.backendExperience) && (
-            <div className="mt-16">
+            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
               <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
 
               {/* Career Goal */}
               {profile.careerGoal && (
-                <div className="mb-12 text-center max-w-4xl mx-auto">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">목표</h3>
-                  <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <div className="mb-10 pb-10 border-b border-gray-200">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-4">목표</h3>
+                  <p className="text-lg text-gray-700 leading-relaxed">
                     {profile.careerGoal}
                   </p>
                 </div>
@@ -318,11 +318,12 @@ export default function Home() {
                 try {
                   const highlights = JSON.parse(profile.experienceHighlights);
                   return (
-                    <div className="mb-12 max-w-4xl mx-auto">
-                      <ul className="space-y-4">
+                    <div className="mb-10 pb-10 border-b border-gray-200">
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-4">주요 경험</h3>
+                      <ul className="space-y-3">
                         {highlights.map((item: string, index: number) => (
                           <li key={index} className="flex gap-3">
-                            <span className="text-blue-600 font-bold flex-shrink-0">•</span>
+                            <span className="text-blue-600 font-bold flex-shrink-0 mt-1">•</span>
                             <span className="text-gray-700 leading-relaxed">{item}</span>
                           </li>
                         ))}
@@ -336,35 +337,35 @@ export default function Home() {
 
               {/* Skills */}
               {(profile.skillsProficient || profile.skillsEducation || profile.skillsCanUse) && (
-                <div className="mb-12">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Skills</h3>
-                  <div className="grid md:grid-cols-3 gap-8">
+                <div className="mb-10 pb-10 border-b border-gray-200">
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-6">기술 스택</h3>
+                  <div className="grid md:grid-cols-3 gap-6">
                     {profile.skillsProficient && (
-                      <div className="bg-blue-50 rounded-xl p-6">
-                        <h4 className="text-lg font-bold text-blue-900 mb-4">Proficient Level</h4>
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
+                        <h4 className="text-base font-bold text-blue-900 mb-3">Proficient</h4>
                         <div className="space-y-2">
                           {profile.skillsProficient.split(',').map((skill, index) => (
-                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                            <div key={index} className="text-gray-800 text-sm">{skill.trim()}</div>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.skillsEducation && (
-                      <div className="bg-green-50 rounded-xl p-6">
-                        <h4 className="text-lg font-bold text-green-900 mb-4">Education Level</h4>
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
+                        <h4 className="text-base font-bold text-green-900 mb-3">Education</h4>
                         <div className="space-y-2">
                           {profile.skillsEducation.split(',').map((skill, index) => (
-                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                            <div key={index} className="text-gray-800 text-sm">{skill.trim()}</div>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.skillsCanUse && (
-                      <div className="bg-purple-50 rounded-xl p-6">
-                        <h4 className="text-lg font-bold text-purple-900 mb-4">Can Use</h4>
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
+                        <h4 className="text-base font-bold text-purple-900 mb-3">Can Use</h4>
                         <div className="space-y-2">
                           {profile.skillsCanUse.split(',').map((skill, index) => (
-                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                            <div key={index} className="text-gray-800 text-sm">{skill.trim()}</div>
                           ))}
                         </div>
                       </div>
@@ -378,17 +379,15 @@ export default function Home() {
                 try {
                   const experiences = JSON.parse(profile.backendExperience);
                   return (
-                    <div className="max-w-4xl mx-auto">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Backend Experience</h3>
-                      <div className="bg-gray-50 rounded-xl p-8">
-                        <ul className="space-y-3">
-                          {experiences.map((item: string, index: number) => (
-                            <li key={index} className="flex gap-3">
-                              <span className="text-blue-600 flex-shrink-0">✓</span>
-                              <span className="text-gray-700">{item}</span>
-                            </li>
-                          ))}
-                        </ul>
+                    <div>
+                      <h3 className="text-2xl font-semibold text-gray-900 mb-4">백엔드 경험</h3>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {experiences.map((item: string, index: number) => (
+                          <div key={index} className="flex gap-2 items-start">
+                            <span className="text-blue-600 flex-shrink-0 mt-0.5">✓</span>
+                            <span className="text-gray-700 text-sm">{item}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
