@@ -166,7 +166,6 @@ export default function Home() {
             <div className="text-xl font-bold text-gray-900">{profile.displayName}</div>
             <div className="flex gap-6 items-center">
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
-              <a href="#skills" className="text-gray-600 hover:text-gray-900 transition-colors">Skills</a>
               <a href="#projects" className="text-gray-600 hover:text-gray-900 transition-colors">Projects</a>
               <a href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">Blog</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
@@ -298,111 +297,109 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Skills & Experience Section */}
-      {(profile.careerGoal || profile.skillsProficient || profile.backendExperience) && (
-        <section id="skills" className="py-20 bg-white">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
+          {/* Skills & Experience - Inside About Section */}
+          {(profile.careerGoal || profile.skillsProficient || profile.backendExperience) && (
+            <div className="mt-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
 
-            {/* Career Goal */}
-            {profile.careerGoal && (
-              <div className="mb-12 text-center max-w-4xl mx-auto">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">목표</h3>
-                <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {profile.careerGoal}
-                </p>
-              </div>
-            )}
-
-            {/* Experience Highlights */}
-            {profile.experienceHighlights && (() => {
-              try {
-                const highlights = JSON.parse(profile.experienceHighlights);
-                return (
-                  <div className="mb-12 max-w-4xl mx-auto">
-                    <ul className="space-y-4">
-                      {highlights.map((item: string, index: number) => (
-                        <li key={index} className="flex gap-3">
-                          <span className="text-blue-600 font-bold flex-shrink-0">•</span>
-                          <span className="text-gray-700 leading-relaxed">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              } catch {
-                return null;
-              }
-            })()}
-
-            {/* Skills */}
-            {(profile.skillsProficient || profile.skillsEducation || profile.skillsCanUse) && (
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Skills</h3>
-                <div className="grid md:grid-cols-3 gap-8">
-                  {profile.skillsProficient && (
-                    <div className="bg-blue-50 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-blue-900 mb-4">Proficient Level</h4>
-                      <div className="space-y-2">
-                        {profile.skillsProficient.split(',').map((skill, index) => (
-                          <div key={index} className="text-gray-700">{skill.trim()}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {profile.skillsEducation && (
-                    <div className="bg-green-50 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-green-900 mb-4">Education Level</h4>
-                      <div className="space-y-2">
-                        {profile.skillsEducation.split(',').map((skill, index) => (
-                          <div key={index} className="text-gray-700">{skill.trim()}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {profile.skillsCanUse && (
-                    <div className="bg-purple-50 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-purple-900 mb-4">Can Use</h4>
-                      <div className="space-y-2">
-                        {profile.skillsCanUse.split(',').map((skill, index) => (
-                          <div key={index} className="text-gray-700">{skill.trim()}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Career Goal */}
+              {profile.careerGoal && (
+                <div className="mb-12 text-center max-w-4xl mx-auto">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">목표</h3>
+                  <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {profile.careerGoal}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Backend Experience */}
-            {profile.backendExperience && (() => {
-              try {
-                const experiences = JSON.parse(profile.backendExperience);
-                return (
-                  <div className="max-w-4xl mx-auto">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Backend Experience</h3>
-                    <div className="bg-gray-50 rounded-xl p-8">
-                      <ul className="space-y-3">
-                        {experiences.map((item: string, index: number) => (
+              {/* Experience Highlights */}
+              {profile.experienceHighlights && (() => {
+                try {
+                  const highlights = JSON.parse(profile.experienceHighlights);
+                  return (
+                    <div className="mb-12 max-w-4xl mx-auto">
+                      <ul className="space-y-4">
+                        {highlights.map((item: string, index: number) => (
                           <li key={index} className="flex gap-3">
-                            <span className="text-blue-600 flex-shrink-0">✓</span>
-                            <span className="text-gray-700">{item}</span>
+                            <span className="text-blue-600 font-bold flex-shrink-0">•</span>
+                            <span className="text-gray-700 leading-relaxed">{item}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
+
+              {/* Skills */}
+              {(profile.skillsProficient || profile.skillsEducation || profile.skillsCanUse) && (
+                <div className="mb-12">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Skills</h3>
+                  <div className="grid md:grid-cols-3 gap-8">
+                    {profile.skillsProficient && (
+                      <div className="bg-blue-50 rounded-xl p-6">
+                        <h4 className="text-lg font-bold text-blue-900 mb-4">Proficient Level</h4>
+                        <div className="space-y-2">
+                          {profile.skillsProficient.split(',').map((skill, index) => (
+                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {profile.skillsEducation && (
+                      <div className="bg-green-50 rounded-xl p-6">
+                        <h4 className="text-lg font-bold text-green-900 mb-4">Education Level</h4>
+                        <div className="space-y-2">
+                          {profile.skillsEducation.split(',').map((skill, index) => (
+                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {profile.skillsCanUse && (
+                      <div className="bg-purple-50 rounded-xl p-6">
+                        <h4 className="text-lg font-bold text-purple-900 mb-4">Can Use</h4>
+                        <div className="space-y-2">
+                          {profile.skillsCanUse.split(',').map((skill, index) => (
+                            <div key={index} className="text-gray-700">{skill.trim()}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                );
-              } catch {
-                return null;
-              }
-            })()}
-          </div>
-        </section>
-      )}
+                </div>
+              )}
+
+              {/* Backend Experience */}
+              {profile.backendExperience && (() => {
+                try {
+                  const experiences = JSON.parse(profile.backendExperience);
+                  return (
+                    <div className="max-w-4xl mx-auto">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Backend Experience</h3>
+                      <div className="bg-gray-50 rounded-xl p-8">
+                        <ul className="space-y-3">
+                          {experiences.map((item: string, index: number) => (
+                            <li key={index} className="flex gap-3">
+                              <span className="text-blue-600 flex-shrink-0">✓</span>
+                              <span className="text-gray-700">{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Projects Section */}
       <section id="projects" className="min-h-screen flex items-center justify-center py-20 bg-gray-50">
