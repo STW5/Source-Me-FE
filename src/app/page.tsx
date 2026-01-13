@@ -299,19 +299,9 @@ export default function Home() {
           </div>
 
           {/* Skills & Experience - Inside About Section */}
-          {(profile.careerGoal || profile.skillsProficient || profile.backendExperience) && (
+          {(profile.experienceHighlights || profile.skillsProficient || profile.backendExperience) && (
             <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
               <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
-
-              {/* Career Goal */}
-              {profile.careerGoal && (
-                <div className="mb-10 pb-10 border-b border-gray-200">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-4">목표</h3>
-                  <p className="text-lg text-gray-700 leading-relaxed">
-                    {profile.careerGoal}
-                  </p>
-                </div>
-              )}
 
               {/* Experience Highlights */}
               {profile.experienceHighlights && (() => {
