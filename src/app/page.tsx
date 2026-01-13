@@ -165,8 +165,8 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="text-xl font-bold text-gray-900">{profile.displayName}</div>
             <div className="flex gap-6 items-center">
-              <a href="#home" className="text-gray-600 hover:text-gray-900 transition-colors">Home</a>
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
+              <a href="#skills" className="text-gray-600 hover:text-gray-900 transition-colors">Skills</a>
               <a href="#projects" className="text-gray-600 hover:text-gray-900 transition-colors">Projects</a>
               <a href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">Blog</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</a>
@@ -203,127 +203,206 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Home Section */}
-      <section id="home" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-6xl font-bold text-gray-900 mb-6 animate-fade-in">
-            Hello, I'm {profile.displayName}
-          </h1>
-          <p className="text-2xl text-gray-600 mb-8">
-            {profile.headline}
-          </p>
-          <div className="flex justify-center gap-4">
-            {profile.githubUrl && (
-              <a
-                href={profile.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all hover:scale-105"
-              >
-                GitHub
-              </a>
-            )}
-            {profile.email && (
-              <a
-                href={`mailto:${profile.email}`}
-                className="px-8 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all hover:scale-105"
-              >
-                Contact
-              </a>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="min-h-screen flex items-center justify-center py-20 bg-white">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="flex items-center justify-between mb-12">
-            <h2 className="text-4xl font-bold text-gray-900">About Me</h2>
+      {/* Hero Section (About) */}
+      <section id="about" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-16">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex items-end justify-end mb-8">
             {isAuthenticated && editMode && (
               <button
                 onClick={() => setShowProfileModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
               >
                 프로필 수정
               </button>
             )}
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 hover:shadow-2xl transition-shadow border border-gray-100">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <div className="mb-6">
-                  {profileImageUrl ? (
-                    <img
-                      src={profileImageUrl}
-                      alt={`${profile.displayName} 프로필 사진`}
-                      className="h-32 w-32 rounded-full object-cover border-4 border-gray-200"
-                    />
-                  ) : (
-                    <div className="h-32 w-32 bg-gray-200 rounded-full flex items-center justify-center">
-                      <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{profile.displayName}</h3>
-                <p className="text-lg text-gray-600 mb-4">{profile.headline}</p>
-                <div className="prose prose-lg">
-                  <p className="text-gray-700 whitespace-pre-wrap">{profile.bioMarkdown}</p>
-                </div>
+          <div className="bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left: Profile Image */}
+              <div className="flex justify-center md:justify-start">
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt={`${profile.displayName} 프로필 사진`}
+                    className="h-64 w-64 rounded-full object-cover border-4 border-gray-200 shadow-lg"
+                  />
+                ) : (
+                  <div className="h-64 w-64 bg-gray-200 rounded-full flex items-center justify-center border-4 border-gray-200 shadow-lg">
+                    <svg className="h-32 w-32 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Information</h3>
+              {/* Right: Info */}
+              <div className="space-y-6">
+                <div>
+                  <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                    Hello, I'm {profile.displayName}
+                  </h1>
+                  <p className="text-2xl text-gray-600 mb-6">
+                    {profile.headline}
+                  </p>
+                  <div className="prose prose-lg max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {profile.bioMarkdown}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
                 {profile.email && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-700">Email:</span>
-                    <span className="text-gray-600">{profile.email}</span>
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>{profile.email}</span>
                   </div>
                 )}
 
-                <div className="pt-4">
-                  <h4 className="font-semibold text-gray-700 mb-3">Links</h4>
-                  <div className="flex flex-col gap-2">
-                    {profile.githubUrl && (
-                      <a
-                        href={profile.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 hover:underline"
-                      >
-                        GitHub →
-                      </a>
-                    )}
-                    {profile.linkedinUrl && (
-                      <a
-                        href={profile.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 hover:underline"
-                      >
-                        LinkedIn →
-                      </a>
-                    )}
-                    {profile.resumeUrl && (
-                      <a
-                        href={profile.resumeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 hover:underline"
-                      >
-                        Resume →
-                      </a>
-                    )}
-                  </div>
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-4 pt-4">
+                  {profile.githubUrl && (
+                    <a
+                      href={profile.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all hover:scale-105 shadow-md"
+                    >
+                      GitHub
+                    </a>
+                  )}
+                  {profile.linkedinUrl && (
+                    <a
+                      href={profile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-md"
+                    >
+                      LinkedIn
+                    </a>
+                  )}
+                  {profile.resumeUrl && (
+                    <a
+                      href={profile.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all hover:scale-105 shadow-md"
+                    >
+                      Resume
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Skills & Experience Section */}
+      {(profile.careerGoal || profile.skillsProficient || profile.backendExperience) && (
+        <section id="skills" className="py-20 bg-white">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
+
+            {/* Career Goal */}
+            {profile.careerGoal && (
+              <div className="mb-12 text-center max-w-4xl mx-auto">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">목표</h3>
+                <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {profile.careerGoal}
+                </p>
+              </div>
+            )}
+
+            {/* Experience Highlights */}
+            {profile.experienceHighlights && (() => {
+              try {
+                const highlights = JSON.parse(profile.experienceHighlights);
+                return (
+                  <div className="mb-12 max-w-4xl mx-auto">
+                    <ul className="space-y-4">
+                      {highlights.map((item: string, index: number) => (
+                        <li key={index} className="flex gap-3">
+                          <span className="text-blue-600 font-bold flex-shrink-0">•</span>
+                          <span className="text-gray-700 leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              } catch {
+                return null;
+              }
+            })()}
+
+            {/* Skills */}
+            {(profile.skillsProficient || profile.skillsEducation || profile.skillsCanUse) && (
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Skills</h3>
+                <div className="grid md:grid-cols-3 gap-8">
+                  {profile.skillsProficient && (
+                    <div className="bg-blue-50 rounded-xl p-6">
+                      <h4 className="text-lg font-bold text-blue-900 mb-4">Proficient Level</h4>
+                      <div className="space-y-2">
+                        {profile.skillsProficient.split(',').map((skill, index) => (
+                          <div key={index} className="text-gray-700">{skill.trim()}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {profile.skillsEducation && (
+                    <div className="bg-green-50 rounded-xl p-6">
+                      <h4 className="text-lg font-bold text-green-900 mb-4">Education Level</h4>
+                      <div className="space-y-2">
+                        {profile.skillsEducation.split(',').map((skill, index) => (
+                          <div key={index} className="text-gray-700">{skill.trim()}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {profile.skillsCanUse && (
+                    <div className="bg-purple-50 rounded-xl p-6">
+                      <h4 className="text-lg font-bold text-purple-900 mb-4">Can Use</h4>
+                      <div className="space-y-2">
+                        {profile.skillsCanUse.split(',').map((skill, index) => (
+                          <div key={index} className="text-gray-700">{skill.trim()}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Backend Experience */}
+            {profile.backendExperience && (() => {
+              try {
+                const experiences = JSON.parse(profile.backendExperience);
+                return (
+                  <div className="max-w-4xl mx-auto">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Backend Experience</h3>
+                    <div className="bg-gray-50 rounded-xl p-8">
+                      <ul className="space-y-3">
+                        {experiences.map((item: string, index: number) => (
+                          <li key={index} className="flex gap-3">
+                            <span className="text-blue-600 flex-shrink-0">✓</span>
+                            <span className="text-gray-700">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              } catch {
+                return null;
+              }
+            })()}
+          </div>
+        </section>
+      )}
 
       {/* Projects Section */}
       <section id="projects" className="min-h-screen flex items-center justify-center py-20 bg-gray-50">

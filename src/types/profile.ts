@@ -9,6 +9,12 @@ export interface SiteProfile {
   githubUrl?: string;
   linkedinUrl?: string;
   resumeUrl?: string;
+  careerGoal?: string;
+  experienceHighlights?: string;
+  skillsProficient?: string;
+  skillsEducation?: string;
+  skillsCanUse?: string;
+  backendExperience?: string;
   profileMedia?: MediaFile | null;
 }
 
@@ -20,6 +26,12 @@ export interface ProfileUpdateRequest {
   githubUrl?: string;
   linkedinUrl?: string;
   resumeUrl?: string;
+  careerGoal?: string;
+  experienceHighlights?: string;
+  skillsProficient?: string;
+  skillsEducation?: string;
+  skillsCanUse?: string;
+  backendExperience?: string;
   profilePictureId?: number | null;
 }
 
