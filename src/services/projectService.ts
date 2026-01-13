@@ -4,8 +4,10 @@ import { Project, ProjectCreateRequest } from '@/types/project';
 import { PageResponse, SearchRequest } from '@/types/common';
 
 export const projectService = {
-  async getProjects(): Promise<Project[]> {
-    const response = await api.get<ApiResponse<Project[]>>('/projects');
+  async getProjects(page: number = 0, size: number = 10): Promise<PageResponse<Project>> {
+    const response = await api.get<ApiResponse<PageResponse<Project>>>('/projects', {
+      params: { page, size }
+    });
     return response.data.data;
   },
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { blogService } from '@/services/blogService';
 import { tagService } from '@/services/tagService';
@@ -10,7 +10,7 @@ import { BlogPostListItem } from '@/types/blog';
 import { Tag } from '@/types/tag';
 import { PageResponse } from '@/types/common';
 
-export default function BlogListPage() {
+function BlogListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedTag = searchParams.get('tag')?.trim() || '';
@@ -63,26 +63,26 @@ export default function BlogListPage() {
       const isAuth = authToken.isAuthenticated();
 
       // Try to fetch all posts if authenticated, fallback to public if 403
-      let data;
+      let pageData;
       if (isAuth) {
         try {
-          data = await blogService.getAllPosts(tag);
+          pageData = await blogService.getAllPosts(tag, currentPage, 10);
         } catch (err: any) {
           // If 403 or 401, token might be invalid - clear it and fetch public posts
           if (err.response?.status === 403 || err.response?.status === 401) {
             authToken.remove();
             setIsAuthenticated(false);
-            data = await blogService.getPublishedPosts(tag);
+            pageData = await blogService.getPublishedPosts(tag, currentPage, 10);
           } else {
             throw err;
           }
         }
       } else {
-        data = await blogService.getPublishedPosts(tag);
+        pageData = await blogService.getPublishedPosts(tag, currentPage, 10);
       }
 
-      setPosts(data);
-      setPostPage(null); // 기존 방식에서는 페이징 정보 없음
+      setPostPage(pageData);
+      setPosts(pageData.content);
     } catch (err: any) {
       setError('블로그 글을 불러오는데 실패했습니다.');
       console.error('Failed to fetch posts:', err);
@@ -445,5 +445,20 @@ export default function BlogListPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BlogListPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-lg text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <BlogListContent />
+    </Suspense>
   );
 }

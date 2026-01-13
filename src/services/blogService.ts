@@ -39,16 +39,18 @@ blogApi.interceptors.response.use(
 
 export const blogService = {
   // Get all published posts (public)
-  async getPublishedPosts(tag?: string): Promise<BlogPostListItem[]> {
-    const params = tag ? { tag } : {};
-    const response = await blogApi.get<ApiResponse<BlogPostListItem[]>>('/blog/posts', { params });
+  async getPublishedPosts(tag?: string, page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
+    const params: any = { page, size };
+    if (tag) params.tag = tag;
+    const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>('/blog/posts', { params });
     return response.data.data;
   },
 
   // Get all posts including drafts (admin)
-  async getAllPosts(tag?: string): Promise<BlogPostListItem[]> {
-    const params = tag ? { tag } : {};
-    const response = await blogApi.get<ApiResponse<BlogPostListItem[]>>('/blog/admin/posts', { params });
+  async getAllPosts(tag?: string, page: number = 0, size: number = 10): Promise<PageResponse<BlogPostListItem>> {
+    const params: any = { page, size };
+    if (tag) params.tag = tag;
+    const response = await blogApi.get<ApiResponse<PageResponse<BlogPostListItem>>>('/blog/admin/posts', { params });
     return response.data.data;
   },
 
