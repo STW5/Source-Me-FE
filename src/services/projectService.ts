@@ -34,22 +34,4 @@ export const projectService = {
   async deleteProject(id: number): Promise<void> {
     await api.delete(`/projects/${id}`);
   },
-
-  async getPopularProjects(page: number = 0, size: number = 10): Promise<PageResponse<Project>> {
-    const response = await api.get<ApiResponse<PageResponse<Project>>>('/projects/popular', {
-      params: { page, size }
-    });
-    return response.data.data;
-  },
-
-  async getMostLikedProjects(page: number = 0, size: number = 10): Promise<PageResponse<Project>> {
-    const response = await api.get<ApiResponse<PageResponse<Project>>>('/projects/most-liked', {
-      params: { page, size }
-    });
-    return response.data.data;
-  },
-
-  async incrementViewCount(id: number): Promise<void> {
-    await api.post(`/projects/${id}/view`);
-  },
 };

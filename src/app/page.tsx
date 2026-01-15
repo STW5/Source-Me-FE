@@ -93,19 +93,6 @@ export default function Home() {
     setShowModal(true);
   };
 
-  const handleProjectClick = async (project: Project) => {
-    // Increment view count every time (no session restriction)
-    try {
-      await projectService.incrementViewCount(project.id);
-
-      // Refresh project list to show updated view count
-      await refreshProjects();
-    } catch (err) {
-      console.error('Failed to increment view count:', err);
-    }
-
-    // TODO: Navigate to project detail page or open modal
-  };
 
   const handleDeleteProject = async (id: number) => {
     if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return;
@@ -452,8 +439,7 @@ export default function Home() {
               {projects.map((project) => (
                 <div
                   key={project.id}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer"
-                  onClick={() => handleProjectClick(project)}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1"
                 >
                   <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden">
                     {project.thumbnailMedia ? (
@@ -511,14 +497,6 @@ export default function Home() {
                           Demo →
                         </a>
                       )}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                      <span className="flex items-center gap-1">
-                        👁️ {project.viewCount}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        ❤️ {project.likeCount}
-                      </span>
                     </div>
                     {(project.startedAt || project.endedAt) && (
                       <p className="text-xs text-gray-500 mb-3">
