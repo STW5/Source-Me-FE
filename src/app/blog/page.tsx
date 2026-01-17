@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Navigation from '@/components/Navigation';
 import { blogService } from '@/services/blogService';
 import { tagService } from '@/services/tagService';
 import { authToken } from '@/lib/auth';
@@ -175,31 +176,21 @@ function BlogListContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <button
-              onClick={() => router.push('/')}
-              className="text-xl font-bold text-gray-900 hover:text-gray-700"
-            >
-              ← Home
-            </button>
-            {isAuthenticated && (
-              <button
-                onClick={() => router.push('/blog/new')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                + 새 글 작성
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Blog List */}
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Blog</h1>
+      <div className="container mx-auto px-4 py-12 max-w-4xl pt-24">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">Blog</h1>
+          {isAuthenticated && (
+            <button
+              onClick={() => router.push('/blog/new')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              + 새 글 작성
+            </button>
+          )}
+        </div>
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
