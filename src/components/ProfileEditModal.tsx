@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { profileService } from '@/services/profileService';
 import { mediaService } from '@/services/mediaService';
-import { CertificateEntry, EducationEntry, InternshipEntry, PublicationPatentEntry, SiteProfile, WorkHistoryEntry } from '@/types/profile';
+import type { PublicationPatentEntry, SiteProfile } from '@/types/profile';
 import { MediaUploadResponse } from '@/types/media';
 import { SingleFileUpload } from './FileUpload';
 
@@ -35,16 +35,15 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
     return items.length > 0 ? JSON.stringify(items) : '';
   };
 
-  const toJsonText = (value: unknown) => (value ? JSON.stringify(value, null, 2) : '');
+  const linesToArray = (value: string) => {
+    return value
+      .split('\n')
+      .map(item => item.trim())
+      .filter(Boolean);
+  };
 
-  const parseJsonArray = <T,>(value: string, label: string): T[] => {
-    const trimmed = value.trim();
-    if (!trimmed) return [];
-    const parsed = JSON.parse(trimmed);
-    if (!Array.isArray(parsed)) {
-      throw new Error(`${label} 형식이 올바르지 않습니다. JSON 배열을 입력해주세요.`);
-    }
-    return parsed as T[];
+  const arrayToLines = (value?: string[]) => {
+    return value && value.length > 0 ? value.join('\n') : '';
   };
 
   const [formData, setFormData] = useState({
@@ -61,11 +60,11 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
     skillsEducation: profile?.skillsEducation || '',
     skillsCanUse: profile?.skillsCanUse || '',
     backendExperience: toMultilineText(profile?.backendExperience),
-    internshipsJson: toJsonText(profile?.internships),
-    educationJson: toJsonText(profile?.education),
-    workHistoryJson: toJsonText(profile?.workHistory),
-    publicationsPatentsJson: toJsonText(profile?.publicationsPatents),
-    certificatesJson: toJsonText(profile?.certificates),
+    internships: profile?.internships || [],
+    education: profile?.education || [],
+    workHistory: profile?.workHistory || [],
+    publicationsPatents: profile?.publicationsPatents || [],
+    certificates: profile?.certificates || [],
     profilePictureId: profile?.profileMedia?.id ?? null,
   });
   const [profilePicture, setProfilePicture] = useState<MediaUploadResponse | null>(null);
@@ -88,15 +87,23 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
         skillsEducation: profile.skillsEducation || '',
         skillsCanUse: profile.skillsCanUse || '',
         backendExperience: toMultilineText(profile.backendExperience),
-        internshipsJson: toJsonText(profile.internships),
-        educationJson: toJsonText(profile.education),
-        workHistoryJson: toJsonText(profile.workHistory),
-        publicationsPatentsJson: toJsonText(profile.publicationsPatents),
-        certificatesJson: toJsonText(profile.certificates),
+        internships: profile.internships || [],
+        education: profile.education || [],
+        workHistory: profile.workHistory || [],
+        publicationsPatents: profile.publicationsPatents || [],
+        certificates: profile.certificates || [],
         profilePictureId: profile.profileMedia?.id ?? null,
       });
     }
   }, [profile]);
+
+  const updateListItem = <T,>(list: T[], index: number, item: T) => {
+    return list.map((current, currentIndex) => (currentIndex === index ? item : current));
+  };
+
+  const removeListItem = <T,>(list: T[], index: number) => {
+    return list.filter((_, currentIndex) => currentIndex !== index);
+  };
 
   const handleProfilePictureUpload = (file: MediaUploadResponse) => {
     setProfilePicture(file);
@@ -114,12 +121,6 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
     setError(null);
 
     try {
-      const internships = parseJsonArray<InternshipEntry>(formData.internshipsJson, 'Internships');
-      const education = parseJsonArray<EducationEntry>(formData.educationJson, 'Education');
-      const workHistory = parseJsonArray<WorkHistoryEntry>(formData.workHistoryJson, 'Work History');
-      const publicationsPatents = parseJsonArray<PublicationPatentEntry>(formData.publicationsPatentsJson, 'Publications & Patents');
-      const certificates = parseJsonArray<CertificateEntry>(formData.certificatesJson, 'Certificates');
-
       const updatedProfile = await profileService.updateProfile({
         displayName: formData.displayName,
         headline: formData.headline,
@@ -134,11 +135,11 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
         skillsEducation: formData.skillsEducation,
         skillsCanUse: formData.skillsCanUse,
         backendExperience: toJsonArrayString(formData.backendExperience),
-        internships,
-        education,
-        workHistory,
-        publicationsPatents,
-        certificates,
+        internships: formData.internships,
+        education: formData.education,
+        workHistory: formData.workHistory,
+        publicationsPatents: formData.publicationsPatents,
+        certificates: formData.certificates,
         profilePictureId: formData.profilePictureId,
       });
 
@@ -397,72 +398,499 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
           </div>
 
           {/* About Sections */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">About 섹션 (JSON 배열)</h3>
+          <div className="space-y-8">
+            <h3 className="text-lg font-semibold text-gray-900">About 섹션</h3>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Internships
-              </label>
-              <textarea
-                rows={5}
-                value={formData.internshipsJson}
-                onChange={(e) => setFormData({ ...formData, internshipsJson: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-                placeholder={'[{"title":"인턴십","period":"2023.01-2023.06","description":"설명"}]'}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold text-gray-900">Internships</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    internships: [...formData.internships, { title: '', period: '', description: '' }],
+                  })}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                >
+                  추가
+                </button>
+              </div>
+              {formData.internships.length === 0 && (
+                <p className="text-sm text-gray-500">등록된 인턴십 정보가 없습니다.</p>
+              )}
+              {formData.internships.map((internship, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        internships: removeListItem(formData.internships, index),
+                      })}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={internship.title}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      internships: updateListItem(formData.internships, index, {
+                        ...internship,
+                        title: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="인턴십 제목"
+                  />
+                  <input
+                    type="text"
+                    value={internship.period}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      internships: updateListItem(formData.internships, index, {
+                        ...internship,
+                        period: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="기간 (예: 2023.01-2023.06)"
+                  />
+                  <textarea
+                    rows={3}
+                    value={internship.description}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      internships: updateListItem(formData.internships, index, {
+                        ...internship,
+                        description: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="설명"
+                  />
+                </div>
+              ))}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Education
-              </label>
-              <textarea
-                rows={5}
-                value={formData.educationJson}
-                onChange={(e) => setFormData({ ...formData, educationJson: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-                placeholder={'[{"institution":"대학교","period":"2019-2023","major":"컴퓨터공학"}]'}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold text-gray-900">Education</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    education: [...formData.education, { institution: '', period: '', major: '', minor: '', gpa: '', majorGpa: '', activities: [] }],
+                  })}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                >
+                  추가
+                </button>
+              </div>
+              {formData.education.length === 0 && (
+                <p className="text-sm text-gray-500">등록된 학력 정보가 없습니다.</p>
+              )}
+              {formData.education.map((education, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        education: removeListItem(formData.education, index),
+                      })}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={education.institution}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      education: updateListItem(formData.education, index, {
+                        ...education,
+                        institution: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="학교/기관"
+                  />
+                  <input
+                    type="text"
+                    value={education.period}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      education: updateListItem(formData.education, index, {
+                        ...education,
+                        period: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="기간 (예: 2019-2023)"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={education.major || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        education: updateListItem(formData.education, index, {
+                          ...education,
+                          major: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="전공"
+                    />
+                    <input
+                      type="text"
+                      value={education.minor || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        education: updateListItem(formData.education, index, {
+                          ...education,
+                          minor: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="부전공"
+                    />
+                    <input
+                      type="text"
+                      value={education.gpa || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        education: updateListItem(formData.education, index, {
+                          ...education,
+                          gpa: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="전체 평점"
+                    />
+                    <input
+                      type="text"
+                      value={education.majorGpa || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        education: updateListItem(formData.education, index, {
+                          ...education,
+                          majorGpa: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="전공 평점"
+                    />
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={arrayToLines(education.activities)}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      education: updateListItem(formData.education, index, {
+                        ...education,
+                        activities: linesToArray(e.target.value),
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder={"활동 (한 줄에 하나씩)\n예) 학회 활동"}
+                  />
+                </div>
+              ))}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Work History
-              </label>
-              <textarea
-                rows={5}
-                value={formData.workHistoryJson}
-                onChange={(e) => setFormData({ ...formData, workHistoryJson: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-                placeholder={'[{"organization":"회사","period":"2023-현재","role":"백엔드 개발"}]'}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold text-gray-900">Work History</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    workHistory: [...formData.workHistory, { organization: '', period: '', role: '', projects: [], activities: [] }],
+                  })}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                >
+                  추가
+                </button>
+              </div>
+              {formData.workHistory.length === 0 && (
+                <p className="text-sm text-gray-500">등록된 경력 정보가 없습니다.</p>
+              )}
+              {formData.workHistory.map((work, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        workHistory: removeListItem(formData.workHistory, index),
+                      })}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={work.organization}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      workHistory: updateListItem(formData.workHistory, index, {
+                        ...work,
+                        organization: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="회사/기관"
+                  />
+                  <input
+                    type="text"
+                    value={work.period}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      workHistory: updateListItem(formData.workHistory, index, {
+                        ...work,
+                        period: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="기간"
+                  />
+                  <input
+                    type="text"
+                    value={work.role}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      workHistory: updateListItem(formData.workHistory, index, {
+                        ...work,
+                        role: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="직무"
+                  />
+                  <textarea
+                    rows={3}
+                    value={arrayToLines(work.projects)}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      workHistory: updateListItem(formData.workHistory, index, {
+                        ...work,
+                        projects: linesToArray(e.target.value),
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder={"프로젝트 (한 줄에 하나씩)\n예) 결제 시스템 개선"}
+                  />
+                  <textarea
+                    rows={3}
+                    value={arrayToLines(work.activities)}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      workHistory: updateListItem(formData.workHistory, index, {
+                        ...work,
+                        activities: linesToArray(e.target.value),
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder={"활동 (한 줄에 하나씩)\n예) 코드 리뷰 리딩"}
+                  />
+                </div>
+              ))}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Publications & Patents
-              </label>
-              <textarea
-                rows={5}
-                value={formData.publicationsPatentsJson}
-                onChange={(e) => setFormData({ ...formData, publicationsPatentsJson: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-                placeholder={'[{"type":"PUBLICATION","title":"논문","details":"학회","date":"2024","description":"설명"}]'}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold text-gray-900">Publications & Patents</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    publicationsPatents: [...formData.publicationsPatents, { type: 'PUBLICATION', title: '', details: '', date: '', description: '' }],
+                  })}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                >
+                  추가
+                </button>
+              </div>
+              {formData.publicationsPatents.length === 0 && (
+                <p className="text-sm text-gray-500">등록된 논문/특허 정보가 없습니다.</p>
+              )}
+              {formData.publicationsPatents.map((item, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        publicationsPatents: removeListItem(formData.publicationsPatents, index),
+                      })}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <select
+                    value={item.type}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      publicationsPatents: updateListItem(formData.publicationsPatents, index, {
+                        ...item,
+                        type: e.target.value as PublicationPatentEntry['type'],
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                  >
+                    <option value="PUBLICATION">논문</option>
+                    <option value="PATENT">특허</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={item.title}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      publicationsPatents: updateListItem(formData.publicationsPatents, index, {
+                        ...item,
+                        title: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="제목"
+                  />
+                  <input
+                    type="text"
+                    value={item.details}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      publicationsPatents: updateListItem(formData.publicationsPatents, index, {
+                        ...item,
+                        details: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="세부 정보"
+                  />
+                  <input
+                    type="text"
+                    value={item.date}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      publicationsPatents: updateListItem(formData.publicationsPatents, index, {
+                        ...item,
+                        date: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="날짜"
+                  />
+                  <textarea
+                    rows={3}
+                    value={item.description}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      publicationsPatents: updateListItem(formData.publicationsPatents, index, {
+                        ...item,
+                        description: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="설명"
+                  />
+                </div>
+              ))}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Certificates
-              </label>
-              <textarea
-                rows={5}
-                value={formData.certificatesJson}
-                onChange={(e) => setFormData({ ...formData, certificatesJson: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
-                placeholder={'[{"name":"자격증","issuer":"기관","date":"2024.01","score":"900"}]'}
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-semibold text-gray-900">Certificates</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    certificates: [...formData.certificates, { name: '', issuer: '', date: '', score: '' }],
+                  })}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100"
+                >
+                  추가
+                </button>
+              </div>
+              {formData.certificates.length === 0 && (
+                <p className="text-sm text-gray-500">등록된 자격증 정보가 없습니다.</p>
+              )}
+              {formData.certificates.map((cert, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        certificates: removeListItem(formData.certificates, index),
+                      })}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={cert.name}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      certificates: updateListItem(formData.certificates, index, {
+                        ...cert,
+                        name: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="자격증 이름"
+                  />
+                  <input
+                    type="text"
+                    value={cert.issuer}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      certificates: updateListItem(formData.certificates, index, {
+                        ...cert,
+                        issuer: e.target.value,
+                      }),
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                    placeholder="발급 기관"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={cert.date}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        certificates: updateListItem(formData.certificates, index, {
+                          ...cert,
+                          date: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="취득일"
+                    />
+                    <input
+                      type="text"
+                      value={cert.score || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        certificates: updateListItem(formData.certificates, index, {
+                          ...cert,
+                          score: e.target.value,
+                        }),
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                      placeholder="점수 (선택)"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
