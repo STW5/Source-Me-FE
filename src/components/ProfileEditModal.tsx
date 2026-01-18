@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { profileService } from '@/services/profileService';
 import { mediaService } from '@/services/mediaService';
-import { SiteProfile } from '@/types/profile';
+import { CertificateEntry, EducationEntry, InternshipEntry, PublicationPatentEntry, SiteProfile, WorkHistoryEntry } from '@/types/profile';
 import { MediaUploadResponse } from '@/types/media';
 import { SingleFileUpload } from './FileUpload';
 
@@ -14,6 +14,39 @@ interface ProfileEditModalProps {
 }
 
 export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEditModalProps) {
+  const toMultilineText = (value?: string) => {
+    if (!value) return '';
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.join('\n');
+      }
+    } catch {
+      return value;
+    }
+    return value;
+  };
+
+  const toJsonArrayString = (value: string) => {
+    const items = value
+      .split('\n')
+      .map(item => item.trim())
+      .filter(Boolean);
+    return items.length > 0 ? JSON.stringify(items) : '';
+  };
+
+  const toJsonText = (value: unknown) => (value ? JSON.stringify(value, null, 2) : '');
+
+  const parseJsonArray = <T,>(value: string, label: string): T[] => {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    const parsed = JSON.parse(trimmed);
+    if (!Array.isArray(parsed)) {
+      throw new Error(`${label} 형식이 올바르지 않습니다. JSON 배열을 입력해주세요.`);
+    }
+    return parsed as T[];
+  };
+
   const [formData, setFormData] = useState({
     displayName: profile?.displayName || '',
     headline: profile?.headline || '',
@@ -22,6 +55,17 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
     githubUrl: profile?.githubUrl || '',
     linkedinUrl: profile?.linkedinUrl || '',
     resumeUrl: profile?.resumeUrl || '',
+    careerGoal: profile?.careerGoal || '',
+    experienceHighlights: toMultilineText(profile?.experienceHighlights),
+    skillsProficient: profile?.skillsProficient || '',
+    skillsEducation: profile?.skillsEducation || '',
+    skillsCanUse: profile?.skillsCanUse || '',
+    backendExperience: toMultilineText(profile?.backendExperience),
+    internshipsJson: toJsonText(profile?.internships),
+    educationJson: toJsonText(profile?.education),
+    workHistoryJson: toJsonText(profile?.workHistory),
+    publicationsPatentsJson: toJsonText(profile?.publicationsPatents),
+    certificatesJson: toJsonText(profile?.certificates),
     profilePictureId: profile?.profileMedia?.id ?? null,
   });
   const [profilePicture, setProfilePicture] = useState<MediaUploadResponse | null>(null);
@@ -38,6 +82,17 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
         githubUrl: profile.githubUrl || '',
         linkedinUrl: profile.linkedinUrl || '',
         resumeUrl: profile.resumeUrl || '',
+        careerGoal: profile.careerGoal || '',
+        experienceHighlights: toMultilineText(profile.experienceHighlights),
+        skillsProficient: profile.skillsProficient || '',
+        skillsEducation: profile.skillsEducation || '',
+        skillsCanUse: profile.skillsCanUse || '',
+        backendExperience: toMultilineText(profile.backendExperience),
+        internshipsJson: toJsonText(profile.internships),
+        educationJson: toJsonText(profile.education),
+        workHistoryJson: toJsonText(profile.workHistory),
+        publicationsPatentsJson: toJsonText(profile.publicationsPatents),
+        certificatesJson: toJsonText(profile.certificates),
         profilePictureId: profile.profileMedia?.id ?? null,
       });
     }
@@ -59,15 +114,32 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
     setError(null);
 
     try {
+      const internships = parseJsonArray<InternshipEntry>(formData.internshipsJson, 'Internships');
+      const education = parseJsonArray<EducationEntry>(formData.educationJson, 'Education');
+      const workHistory = parseJsonArray<WorkHistoryEntry>(formData.workHistoryJson, 'Work History');
+      const publicationsPatents = parseJsonArray<PublicationPatentEntry>(formData.publicationsPatentsJson, 'Publications & Patents');
+      const certificates = parseJsonArray<CertificateEntry>(formData.certificatesJson, 'Certificates');
+
       const updatedProfile = await profileService.updateProfile({
         displayName: formData.displayName,
         headline: formData.headline,
         bioMarkdown: formData.bioMarkdown,
-        email: formData.email || undefined,
-        githubUrl: formData.githubUrl || undefined,
-        linkedinUrl: formData.linkedinUrl || undefined,
-        resumeUrl: formData.resumeUrl || undefined,
-        profilePictureId: formData.profilePictureId ?? undefined,
+        email: formData.email,
+        githubUrl: formData.githubUrl,
+        linkedinUrl: formData.linkedinUrl,
+        resumeUrl: formData.resumeUrl,
+        careerGoal: formData.careerGoal,
+        experienceHighlights: toJsonArrayString(formData.experienceHighlights),
+        skillsProficient: formData.skillsProficient,
+        skillsEducation: formData.skillsEducation,
+        skillsCanUse: formData.skillsCanUse,
+        backendExperience: toJsonArrayString(formData.backendExperience),
+        internships,
+        education,
+        workHistory,
+        publicationsPatents,
+        certificates,
+        profilePictureId: formData.profilePictureId,
       });
 
       onSave(updatedProfile);
@@ -237,6 +309,159 @@ export default function ProfileEditModal({ profile, onClose, onSave }: ProfileEd
                 onChange={(e) => setFormData({ ...formData, resumeUrl: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 placeholder="https://example.com/resume.pdf"
+              />
+            </div>
+          </div>
+
+          {/* About Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">About 정보</h3>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                커리어 목표
+              </label>
+              <textarea
+                rows={3}
+                value={formData.careerGoal}
+                onChange={(e) => setFormData({ ...formData, careerGoal: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                placeholder="커리어 목표를 입력하세요"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                주요 경험 (한 줄에 하나씩)
+              </label>
+              <textarea
+                rows={4}
+                value={formData.experienceHighlights}
+                onChange={(e) => setFormData({ ...formData, experienceHighlights: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                placeholder={"경험 항목을 줄바꿈으로 입력하세요\n예) 대규모 트래픽 처리 경험"}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Proficient (쉼표 구분)
+                </label>
+                <input
+                  type="text"
+                  value={formData.skillsProficient}
+                  onChange={(e) => setFormData({ ...formData, skillsProficient: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  placeholder="Java, Spring Boot"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Education (쉼표 구분)
+                </label>
+                <input
+                  type="text"
+                  value={formData.skillsEducation}
+                  onChange={(e) => setFormData({ ...formData, skillsEducation: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  placeholder="CS, Data Structures"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Can Use (쉼표 구분)
+                </label>
+                <input
+                  type="text"
+                  value={formData.skillsCanUse}
+                  onChange={(e) => setFormData({ ...formData, skillsCanUse: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  placeholder="AWS, Redis"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                백엔드 경험 (한 줄에 하나씩)
+              </label>
+              <textarea
+                rows={4}
+                value={formData.backendExperience}
+                onChange={(e) => setFormData({ ...formData, backendExperience: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                placeholder={"경험 항목을 줄바꿈으로 입력하세요\n예) REST API 설계/구현"}
+              />
+            </div>
+          </div>
+
+          {/* About Sections */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">About 섹션 (JSON 배열)</h3>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Internships
+              </label>
+              <textarea
+                rows={5}
+                value={formData.internshipsJson}
+                onChange={(e) => setFormData({ ...formData, internshipsJson: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
+                placeholder={'[{"title":"인턴십","period":"2023.01-2023.06","description":"설명"}]'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Education
+              </label>
+              <textarea
+                rows={5}
+                value={formData.educationJson}
+                onChange={(e) => setFormData({ ...formData, educationJson: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
+                placeholder={'[{"institution":"대학교","period":"2019-2023","major":"컴퓨터공학"}]'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Work History
+              </label>
+              <textarea
+                rows={5}
+                value={formData.workHistoryJson}
+                onChange={(e) => setFormData({ ...formData, workHistoryJson: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
+                placeholder={'[{"organization":"회사","period":"2023-현재","role":"백엔드 개발"}]'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Publications & Patents
+              </label>
+              <textarea
+                rows={5}
+                value={formData.publicationsPatentsJson}
+                onChange={(e) => setFormData({ ...formData, publicationsPatentsJson: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
+                placeholder={'[{"type":"PUBLICATION","title":"논문","details":"학회","date":"2024","description":"설명"}]'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Certificates
+              </label>
+              <textarea
+                rows={5}
+                value={formData.certificatesJson}
+                onChange={(e) => setFormData({ ...formData, certificatesJson: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono text-sm"
+                placeholder={'[{"name":"자격증","issuer":"기관","date":"2024.01","score":"900"}]'}
               />
             </div>
           </div>

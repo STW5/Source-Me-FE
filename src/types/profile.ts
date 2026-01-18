@@ -76,6 +76,11 @@ export interface ProfileUpdateRequest {
   skillsEducation?: string;
   skillsCanUse?: string;
   backendExperience?: string;
+  internships?: InternshipEntry[];
+  education?: EducationEntry[];
+  workHistory?: WorkHistoryEntry[];
+  publicationsPatents?: PublicationPatentEntry[];
+  certificates?: CertificateEntry[];
   profilePictureId?: number | null;
 }
 
