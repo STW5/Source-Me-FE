@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import Navigation from '@/components/Navigation';
 import { projectService } from '@/services/projectService';
 import { authToken } from '@/lib/auth';
@@ -20,6 +22,10 @@ export default function ProjectsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailProject, setDetailProject] = useState<Project | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
@@ -65,9 +71,39 @@ export default function ProjectsPage() {
     setShowModal(true);
   };
 
-  const handleEditProject = (project: Project) => {
-    setEditingProject(project);
-    setShowModal(true);
+  const handleEditProject = async (project: Project) => {
+    try {
+      const detail = await projectService.getProject(project.id);
+      setEditingProject(detail);
+      setShowModal(true);
+    } catch (err) {
+      console.error('Failed to fetch project detail:', err);
+      alert('프로젝트 상세 정보를 불러오지 못했습니다.');
+    }
+  };
+
+  const handleOpenDetail = async (projectId: number) => {
+    setShowDetailModal(true);
+    setDetailLoading(true);
+    setDetailError(null);
+    try {
+      const detail = await projectService.getProject(projectId);
+      setDetailProject(detail);
+    } catch (err) {
+      console.error('Failed to fetch project detail:', err);
+      setDetailError('프로젝트 상세 정보를 불러오지 못했습니다.');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const handleDeleteProject = async (id: number) => {
@@ -123,42 +159,18 @@ export default function ProjectsPage() {
           )}
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="프로젝트 검색 (제목, 요약, 태그)..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              검색
-            </button>
-            {searchKeyword && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchInput('');
-                  setSearchKeyword('');
-                  setCurrentPage(0);
-                }}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                초기화
-              </button>
-            )}
-          </div>
-          {searchKeyword && (
-            <p className="mt-2 text-sm text-gray-600">
-              "{searchKeyword}" 검색 결과: {projectPage?.totalElements || 0}개
-            </p>
-          )}
-        </form>
+        <SearchBar
+          searchInput={searchInput}
+          searchKeyword={searchKeyword}
+          totalElements={projectPage?.totalElements || 0}
+          onSearchInputChange={setSearchInput}
+          onSearch={handleSearch}
+          onClear={() => {
+            setSearchInput('');
+            setSearchKeyword('');
+            setCurrentPage(0);
+          }}
+        />
 
         {projects.length === 0 ? (
           <p className="text-center text-gray-600">
@@ -168,165 +180,46 @@ export default function ProjectsPage() {
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => (
-                <div
+                <ProjectCard
                   key={project.id}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1"
-                >
-                  <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden">
-                    {project.thumbnailMedia ? (
-                      <img
-                        src={mediaService.getMediaUrl(project.thumbnailMedia) || ''}
-                        alt={`${project.title} 썸네일`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-4xl">🚀</span>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{project.title}</h3>
-                      {project.isFeatured && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 mb-4">{project.summary}</p>
-                    {project.tags && project.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {project.tags.map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex gap-2 mb-4">
-                      {project.githubUrl && (
-                        <a
-                          href={project.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                        >
-                          GitHub →
-                        </a>
-                      )}
-                      {project.demoUrl && (
-                        <a
-                          href={project.demoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                        >
-                          Demo →
-                        </a>
-                      )}
-                    </div>
-                    {(project.startedAt || project.endedAt) && (
-                      <p className="text-xs text-gray-500 mb-3">
-                        {project.startedAt && new Date(project.startedAt).toLocaleDateString('ko-KR')}
-                        {project.endedAt && ` - ${new Date(project.endedAt).toLocaleDateString('ko-KR')}`}
-                        {!project.endedAt && ' - 진행중'}
-                      </p>
-                    )}
-                    {editMode && (
-                      <div className="flex gap-2 pt-3 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditProject(project);
-                          }}
-                          className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProject(project.id);
-                          }}
-                          className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  project={project}
+                  editMode={editMode}
+                  onOpenDetail={handleOpenDetail}
+                  onEdit={handleEditProject}
+                  onDelete={handleDeleteProject}
+                  formatDate={formatDate}
+                />
               ))}
             </div>
 
-            {/* Pagination */}
             {projectPage && projectPage.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={projectPage.first}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    projectPage.first
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  이전
-                </button>
-
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, projectPage.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (projectPage.totalPages <= 5) {
-                      pageNum = i;
-                    } else if (currentPage < 3) {
-                      pageNum = i;
-                    } else if (currentPage > projectPage.totalPages - 4) {
-                      pageNum = projectPage.totalPages - 5 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`w-10 h-10 rounded-lg transition-colors ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                        }`}
-                      >
-                        {pageNum + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={projectPage.last}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    projectPage.last
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  다음
-                </button>
-
-                <span className="ml-4 text-sm text-gray-600">
-                  {currentPage + 1} / {projectPage.totalPages} 페이지
-                </span>
-              </div>
+              <Pagination
+                currentPage={currentPage}
+                projectPage={projectPage}
+                onPageChange={handlePageChange}
+              />
             )}
           </>
         )}
         </div>
+
+        {showDetailModal && (
+          <ProjectDetailModal
+            project={detailProject}
+            loading={detailLoading}
+            error={detailError}
+            isAuthenticated={isAuthenticated}
+            onClose={() => {
+              setShowDetailModal(false);
+              setDetailProject(null);
+              setDetailError(null);
+            }}
+            onEdit={(project) => {
+              setShowDetailModal(false);
+              handleEditProject(project);
+            }}
+          />
+        )}
 
         {/* Project Form Modal */}
         {showModal && (
@@ -348,6 +241,531 @@ export default function ProjectsPage() {
   );
 }
 
+function SearchBar({
+  searchInput,
+  searchKeyword,
+  totalElements,
+  onSearchInputChange,
+  onSearch,
+  onClear,
+}: {
+  searchInput: string;
+  searchKeyword: string;
+  totalElements: number;
+  onSearchInputChange: (value: string) => void;
+  onSearch: (e: React.FormEvent) => void;
+  onClear: () => void;
+}) {
+  return (
+    <form onSubmit={onSearch} className="mb-8">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => onSearchInputChange(e.target.value)}
+          placeholder="프로젝트 검색 (제목, 요약, 태그)..."
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+        />
+        <button
+          type="submit"
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          검색
+        </button>
+        {searchKeyword && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            초기화
+          </button>
+        )}
+      </div>
+      {searchKeyword && (
+        <p className="mt-2 text-sm text-gray-600">
+          "{searchKeyword}" 검색 결과: {totalElements}개
+        </p>
+      )}
+    </form>
+  );
+}
+
+function ProjectCard({
+  project,
+  editMode,
+  onOpenDetail,
+  onEdit,
+  onDelete,
+  formatDate,
+}: {
+  project: Project;
+  editMode: boolean;
+  onOpenDetail: (id: number) => void;
+  onEdit: (project: Project) => void;
+  onDelete: (id: number) => void;
+  formatDate: (date?: string) => string;
+}) {
+  return (
+    <div
+      className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer"
+      onClick={() => onOpenDetail(project.id)}
+    >
+      <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden">
+        {project.thumbnailMedia ? (
+          <img
+            src={mediaService.getMediaUrl(project.thumbnailMedia) || ''}
+            alt={`${project.title} 썸네일`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-4xl">🚀</span>
+        )}
+      </div>
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-xl font-bold text-gray-900">{project.title}</h3>
+          {project.isFeatured && (
+            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">
+              Featured
+            </span>
+          )}
+        </div>
+        <p className="text-gray-600 mb-4">{project.summary}</p>
+        {project.tags && project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {project.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2 mb-4">
+          {project.githubUrl && (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              GitHub →
+            </a>
+          )}
+          {project.demoUrl && (
+            <a
+              href={project.demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              Demo →
+            </a>
+          )}
+        </div>
+        {(project.startedAt || project.endedAt) && (
+          <p className="text-xs text-gray-500 mb-3">
+            {project.startedAt && formatDate(project.startedAt)}
+            {project.endedAt && ` - ${formatDate(project.endedAt)}`}
+            {!project.endedAt && ' - 진행중'}
+          </p>
+        )}
+        {editMode && (
+          <div className="flex gap-2 pt-3 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(project);
+              }}
+              className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+            >
+              수정
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(project.id);
+              }}
+              className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Pagination({
+  currentPage,
+  projectPage,
+  onPageChange,
+}: {
+  currentPage: number;
+  projectPage: PageResponse<Project>;
+  onPageChange: (page: number) => void;
+}) {
+  const getPageNumbers = () => {
+    return Array.from({ length: Math.min(5, projectPage.totalPages) }, (_, i) => {
+      if (projectPage.totalPages <= 5) {
+        return i;
+      } else if (currentPage < 3) {
+        return i;
+      } else if (currentPage > projectPage.totalPages - 4) {
+        return projectPage.totalPages - 5 + i;
+      } else {
+        return currentPage - 2 + i;
+      }
+    });
+  };
+
+  return (
+    <div className="flex justify-center items-center gap-2 mt-12">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={projectPage.first}
+        className={`px-4 py-2 rounded-lg transition-colors ${
+          projectPage.first
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        이전
+      </button>
+
+      <div className="flex gap-1">
+        {getPageNumbers().map((pageNum) => (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`w-10 h-10 rounded-lg transition-colors ${
+              currentPage === pageNum
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+            }`}
+          >
+            {pageNum + 1}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={projectPage.last}
+        className={`px-4 py-2 rounded-lg transition-colors ${
+          projectPage.last
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        다음
+      </button>
+
+      <span className="ml-4 text-sm text-gray-600">
+        {currentPage + 1} / {projectPage.totalPages} 페이지
+      </span>
+    </div>
+  );
+}
+
+function ProjectDetailModal({
+  project,
+  loading,
+  error,
+  isAuthenticated,
+  onClose,
+  onEdit,
+}: {
+  project: Project | null;
+  loading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+  onClose: () => void;
+  onEdit: (project: Project) => void;
+}) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const renderMarkdown = (value?: string) => {
+    if (!value) return null;
+    const normalized = value.replace(/\n/g, '  \n');
+    return (
+      <div className="prose max-w-none text-gray-700">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{normalized}</ReactMarkdown>
+      </div>
+    );
+  };
+
+  const renderOwnedServices = (value?: string) => {
+    if (!value) {
+      return <p className="text-gray-900 font-medium">-</p>;
+    }
+    const services = value
+      .split(',')
+      .map((service) => service.trim())
+      .filter(Boolean);
+    if (services.length <= 1) {
+      return <p className="text-gray-900 font-medium">{value}</p>;
+    }
+    return (
+      <ul className="space-y-1 text-gray-900 font-medium">
+        {services.map((service) => (
+          <li key={service}>{service}</li>
+        ))}
+      </ul>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">프로젝트 상세</h2>
+          <div className="flex items-center gap-3">
+            {isAuthenticated && project && (
+              <button
+                onClick={() => onEdit(project)}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex items-center gap-2 px-4"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="font-medium">수정</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto">
+          {loading && (
+            <div className="p-16 text-center">
+              <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+              <p className="mt-6 text-lg text-gray-600 font-medium">프로젝트 정보를 불러오는 중...</p>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="p-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-red-600 text-lg">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && project && (
+            <div className="p-8 space-y-10">
+              {/* Hero Section */}
+              <div className="space-y-6">
+                {project.thumbnailMedia && (
+                  <div className="w-full h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img
+                      src={mediaService.getMediaUrl(project.thumbnailMedia) || ''}
+                      alt={`${project.title} 썸네일`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      {project.title}
+                    </h3>
+                    {project.isFeatured && (
+                      <span className="px-4 py-1.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full text-sm font-semibold shadow-md">
+                        ⭐ Featured
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-gray-700 text-xl leading-relaxed">{project.summary}</p>
+
+                  {project.tags && project.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {project.tags.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-200 hover:shadow-md transition-shadow"
+                        >
+                          #{tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-4 text-base pt-2">
+                    {project.githubUrl && (
+                      <a
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all shadow-md hover:shadow-lg"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                        </svg>
+                        GitHub
+                      </a>
+                    )}
+                    {project.demoUrl && (
+                      <a
+                        href={project.demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Live Demo
+                      </a>
+                    )}
+                  </div>
+
+                  {(project.startedAt || project.endedAt) && (
+                    <div className="flex items-center gap-2 text-base text-gray-600 bg-gray-50 px-4 py-3 rounded-lg border border-gray-200">
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="font-medium">
+                        {project.startedAt && formatDate(project.startedAt)}
+                        {project.endedAt && ` - ${formatDate(project.endedAt)}`}
+                        {!project.endedAt && ' - 진행중'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Cards */}
+              <div className="grid md:grid-cols-3 gap-5">
+                <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-purple-700 uppercase tracking-wide">팀 규모</p>
+                  </div>
+                  <p className="text-gray-900 font-bold text-lg">{project.teamSize || '-'}</p>
+                </div>
+
+                <div className="rounded-xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">역할</p>
+                  </div>
+                  <p className="text-gray-900 font-bold text-lg">{project.role || '-'}</p>
+                </div>
+
+                <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">담당 서비스</p>
+                  </div>
+                  <div className="text-gray-900 font-bold text-lg">{renderOwnedServices(project.ownedServices)}</div>
+                </div>
+              </div>
+
+              {/* Content Sections */}
+              {project.introductionMarkdown && (
+                <section className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-8 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">프로젝트 소개</h4>
+                  </div>
+                  <div className="pl-2">{renderMarkdown(project.introductionMarkdown)}</div>
+                </section>
+              )}
+
+              {project.responsibilitiesMarkdown && (
+                <section className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-8 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">주요 개발 업무</h4>
+                  </div>
+                  <div className="pl-2">{renderMarkdown(project.responsibilitiesMarkdown)}</div>
+                </section>
+              )}
+
+              {project.troubleshootingMarkdown && (
+                <section className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-8 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">기술적 의사결정 & 트러블슈팅</h4>
+                  </div>
+                  <div className="pl-2">{renderMarkdown(project.troubleshootingMarkdown)}</div>
+                </section>
+              )}
+
+              {project.contentMarkdown && (
+                <section className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-8 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <h4 className="text-2xl font-bold text-gray-900">추가 내용</h4>
+                  </div>
+                  <div className="pl-2">{renderMarkdown(project.contentMarkdown)}</div>
+                </section>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProjectFormModal({
   project,
   onClose,
@@ -361,7 +779,7 @@ function ProjectFormModal({
     title: project?.title || '',
     slug: project?.slug || '',
     summary: project?.summary || '',
-    contentMarkdown: '',
+    contentMarkdown: project?.contentMarkdown || '',
     startedAt: project?.startedAt || '',
     endedAt: project?.endedAt || '',
     isPublished: true,
@@ -369,6 +787,12 @@ function ProjectFormModal({
     featuredOrder: 0,
     githubUrl: project?.githubUrl || '',
     demoUrl: project?.demoUrl || '',
+    teamSize: project?.teamSize || '',
+    role: project?.role || '',
+    ownedServices: project?.ownedServices || '',
+    introductionMarkdown: project?.introductionMarkdown || '',
+    responsibilitiesMarkdown: project?.responsibilitiesMarkdown || '',
+    troubleshootingMarkdown: project?.troubleshootingMarkdown || '',
     tagNames: project?.tags?.map((tag) => tag.name) || [],
     thumbnailMediaId: project?.thumbnailMedia?.id ?? null,
   });
@@ -377,6 +801,31 @@ function ProjectFormModal({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormData({
+      title: project?.title || '',
+      slug: project?.slug || '',
+      summary: project?.summary || '',
+      contentMarkdown: project?.contentMarkdown || '',
+      startedAt: project?.startedAt || '',
+      endedAt: project?.endedAt || '',
+      isPublished: true,
+      isFeatured: project?.isFeatured || false,
+      featuredOrder: project?.featuredOrder || 0,
+      githubUrl: project?.githubUrl || '',
+      demoUrl: project?.demoUrl || '',
+      teamSize: project?.teamSize || '',
+      role: project?.role || '',
+      ownedServices: project?.ownedServices || '',
+      introductionMarkdown: project?.introductionMarkdown || '',
+      responsibilitiesMarkdown: project?.responsibilitiesMarkdown || '',
+      troubleshootingMarkdown: project?.troubleshootingMarkdown || '',
+      tagNames: project?.tags?.map((tag) => tag.name) || [],
+      thumbnailMediaId: project?.thumbnailMedia?.id ?? null,
+    });
+    setTagInput(project?.tags?.map((tag) => tag.name).join(', ') || '');
+  }, [project]);
 
   const handleTagInput = (value: string) => {
     setTagInput(value);
@@ -517,6 +966,43 @@ function ProjectFormModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                팀 규모
+              </label>
+              <input
+                type="text"
+                value={formData.teamSize}
+                onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                역할
+              </label>
+              <input
+                type="text"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              담당 서비스
+            </label>
+            <input
+              type="text"
+              value={formData.ownedServices}
+              onChange={(e) => setFormData({ ...formData, ownedServices: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               GitHub URL
@@ -537,6 +1023,62 @@ function ProjectFormModal({
               type="url"
               value={formData.demoUrl}
               onChange={(e) => setFormData({ ...formData, demoUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              프로젝트 소개 (Markdown)
+            </label>
+            <textarea
+              rows={4}
+              value={formData.introductionMarkdown}
+              onChange={(e) =>
+                setFormData({ ...formData, introductionMarkdown: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              주요 개발 업무 (Markdown)
+            </label>
+            <textarea
+              rows={5}
+              value={formData.responsibilitiesMarkdown}
+              onChange={(e) =>
+                setFormData({ ...formData, responsibilitiesMarkdown: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              기술적 의사결정 & 트러블슈팅 (Markdown)
+            </label>
+            <textarea
+              rows={6}
+              value={formData.troubleshootingMarkdown}
+              onChange={(e) =>
+                setFormData({ ...formData, troubleshootingMarkdown: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              추가 내용 (Markdown)
+            </label>
+            <textarea
+              rows={4}
+              value={formData.contentMarkdown}
+              onChange={(e) =>
+                setFormData({ ...formData, contentMarkdown: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             />
           </div>
