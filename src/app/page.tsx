@@ -62,32 +62,32 @@ export default function Home() {
       <Navigation />
 
       {/* Hero Section (About) */}
-      <section id="about" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-16 pb-20">
+      <section id="about" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-16 pb-12 md:pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex items-end justify-end mb-8">
+          <div className="flex items-end justify-end mb-4 md:mb-8">
             {isAuthenticated && (
               <button
                 onClick={() => setShowProfileModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
               >
                 프로필 수정
               </button>
             )}
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               {/* Left: Profile Image */}
               <div className="flex justify-center md:justify-start">
                 {profileImageUrl ? (
                   <img
                     src={profileImageUrl}
                     alt={`${profile.displayName} 프로필 사진`}
-                    className="h-64 w-64 rounded-full object-cover border-4 border-gray-200 shadow-lg"
+                    className="h-48 w-48 md:h-64 md:w-64 rounded-full object-cover border-4 border-gray-200 shadow-lg"
                   />
                 ) : (
-                  <div className="h-64 w-64 bg-gray-200 rounded-full flex items-center justify-center border-4 border-gray-200 shadow-lg">
-                    <svg className="h-32 w-32 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="h-48 w-48 md:h-64 md:w-64 bg-gray-200 rounded-full flex items-center justify-center border-4 border-gray-200 shadow-lg">
+                    <svg className="h-24 w-24 md:h-32 md:w-32 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -95,16 +95,16 @@ export default function Home() {
               </div>
 
               {/* Right: Info */}
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 <div>
-                  <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                  <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
                     Hello, I'm {profile.displayName}
                   </h1>
-                  <p className="text-2xl text-gray-600 mb-6">
+                  <p className="text-lg md:text-2xl text-gray-600 mb-4 md:mb-6">
                     {profile.headline}
                   </p>
-                  <div className="prose prose-lg max-w-none">
-                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  <div className="prose prose-sm md:prose-lg max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm md:text-base">
                       {profile.bioMarkdown}
                     </p>
                   </div>
@@ -112,22 +112,22 @@ export default function Home() {
 
                 {/* Contact Info */}
                 {profile.email && (
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3 text-gray-700 text-sm md:text-base">
+                    <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span>{profile.email}</span>
+                    <span className="break-all">{profile.email}</span>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap gap-4 pt-4">
+                <div className="flex flex-wrap gap-2 md:gap-4 pt-2 md:pt-4">
                   {profile.githubUrl && (
                     <a
                       href={profile.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all hover:scale-105 shadow-md"
+                      className="px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all hover:scale-105 shadow-md"
                     >
                       GitHub
                     </a>
@@ -137,7 +137,7 @@ export default function Home() {
                       href={profile.linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-md"
+                      className="px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 shadow-md"
                     >
                       LinkedIn
                     </a>
@@ -147,7 +147,7 @@ export default function Home() {
                       href={profile.resumeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-6 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all hover:scale-105 shadow-md"
+                      className="px-4 py-2 md:px-6 md:py-3 text-sm md:text-base bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all hover:scale-105 shadow-md"
                     >
                       Resume
                     </a>
@@ -159,8 +159,8 @@ export default function Home() {
 
           {/* Skills & Experience - Inside About Section */}
           {(profile.experienceHighlights || profile.skillsProficient || profile.backendExperience) && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Skills & Experience</h2>
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Skills & Experience</h2>
 
               {/* Experience Highlights */}
               {profile.experienceHighlights && (() => {
@@ -187,8 +187,8 @@ export default function Home() {
               {/* Skills */}
               {(profile.skillsProficient || profile.skillsEducation || profile.skillsCanUse) && (
                 <div className="mb-10 pb-10 border-b border-gray-200">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-6">기술 스택</h3>
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4 md:mb-6">기술 스택</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     {profile.skillsProficient && (
                       <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
                         <h4 className="text-base font-bold text-blue-900 mb-3">Proficient</h4>
@@ -249,8 +249,8 @@ export default function Home() {
 
           {/* Internships Section */}
           {profile.internships && profile.internships.length > 0 && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Internship</h2>
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Internship</h2>
               <div className="space-y-8">
                 {profile.internships.map((internship, index) => (
                   <div key={index} className="border-l-4 border-blue-500 pl-6">
@@ -265,8 +265,8 @@ export default function Home() {
 
           {/* Education Section */}
           {profile.education && profile.education.length > 0 && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Education</h2>
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Education</h2>
               <div className="space-y-10">
                 {profile.education.map((edu, index) => (
                   <div key={index} className="border-l-4 border-green-500 pl-6">
@@ -317,8 +317,8 @@ export default function Home() {
 
           {/* Work History Section */}
           {profile.workHistory && profile.workHistory.length > 0 && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Work History</h2>
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Work History</h2>
               <div className="space-y-10">
                 {profile.workHistory.map((work, index) => (
                   <div key={index} className="border-l-4 border-purple-500 pl-6">
@@ -359,8 +359,8 @@ export default function Home() {
 
           {/* Publications & Patents Section */}
           {profile.publicationsPatents && profile.publicationsPatents.length > 0 && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Publications & Patents</h2>
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Publications & Patents</h2>
               <div className="space-y-10">
                 {profile.publicationsPatents.map((item, index) => (
                   <div key={index} className={`border-l-4 ${item.type === 'PUBLICATION' ? 'border-indigo-500' : 'border-orange-500'} pl-6`}>
@@ -381,9 +381,9 @@ export default function Home() {
 
           {/* Certificates Section */}
           {profile.certificates && profile.certificates.length > 0 && (
-            <div className="mt-16 bg-white rounded-3xl shadow-2xl p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">Certificates</h2>
-              <div className="grid md:grid-cols-2 gap-6">
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Certificates</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {profile.certificates.map((cert, index) => (
                   <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{cert.name}</h3>

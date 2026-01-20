@@ -133,13 +133,13 @@ export default function ProjectsPage() {
       <Navigation />
       <div className="min-h-screen bg-gray-50 py-20 pt-20">
         <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Projects</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Projects</h1>
           {isAuthenticated && (
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-2 md:gap-3 items-center">
               <button
                 onClick={() => setEditMode(!editMode)}
-                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                className={`px-2.5 py-1.5 md:px-3 md:py-1.5 text-xs md:text-sm rounded-lg transition-colors ${
                   editMode
                     ? 'bg-orange-600 text-white hover:bg-orange-700'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
               {editMode && (
                 <button
                   onClick={handleCreateProject}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   + 새 프로젝트
                 </button>
@@ -178,7 +178,7 @@ export default function ProjectsPage() {
           </p>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}
@@ -257,30 +257,32 @@ function SearchBar({
   onClear: () => void;
 }) {
   return (
-    <form onSubmit={onSearch} className="mb-8">
-      <div className="flex gap-2">
+    <form onSubmit={onSearch} className="mb-6 md:mb-8">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           value={searchInput}
           onChange={(e) => onSearchInputChange(e.target.value)}
           placeholder="프로젝트 검색 (제목, 요약, 태그)..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+          className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
         />
-        <button
-          type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          검색
-        </button>
-        {searchKeyword && (
+        <div className="flex gap-2">
           <button
-            type="button"
-            onClick={onClear}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            type="submit"
+            className="flex-1 sm:flex-none px-4 md:px-6 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            초기화
+            검색
           </button>
-        )}
+          {searchKeyword && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex-1 sm:flex-none px-3 md:px-4 py-2 text-sm md:text-base bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              초기화
+            </button>
+          )}
+        </div>
       </div>
       {searchKeyword && (
         <p className="mt-2 text-sm text-gray-600">
@@ -426,48 +428,50 @@ function Pagination({
   };
 
   return (
-    <div className="flex justify-center items-center gap-2 mt-12">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={projectPage.first}
-        className={`px-4 py-2 rounded-lg transition-colors ${
-          projectPage.first
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        이전
-      </button>
+    <div className="flex flex-col sm:flex-row justify-center items-center gap-3 md:gap-2 mt-8 md:mt-12">
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={projectPage.first}
+          className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-sm md:text-base rounded-lg transition-colors ${
+            projectPage.first
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          이전
+        </button>
 
-      <div className="flex gap-1">
-        {getPageNumbers().map((pageNum) => (
-          <button
-            key={pageNum}
-            onClick={() => onPageChange(pageNum)}
-            className={`w-10 h-10 rounded-lg transition-colors ${
-              currentPage === pageNum
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-            }`}
-          >
-            {pageNum + 1}
-          </button>
-        ))}
+        <div className="flex gap-1">
+          {getPageNumbers().map((pageNum) => (
+            <button
+              key={pageNum}
+              onClick={() => onPageChange(pageNum)}
+              className={`w-8 h-8 md:w-10 md:h-10 text-sm md:text-base rounded-lg transition-colors ${
+                currentPage === pageNum
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              {pageNum + 1}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={projectPage.last}
+          className={`flex-1 sm:flex-none px-3 md:px-4 py-2 text-sm md:text-base rounded-lg transition-colors ${
+            projectPage.last
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          다음
+        </button>
       </div>
 
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={projectPage.last}
-        className={`px-4 py-2 rounded-lg transition-colors ${
-          projectPage.last
-            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        다음
-      </button>
-
-      <span className="ml-4 text-sm text-gray-600">
+      <span className="text-xs md:text-sm text-gray-600">
         {currentPage + 1} / {projectPage.totalPages} 페이지
       </span>
     </div>

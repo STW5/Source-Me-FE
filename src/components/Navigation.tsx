@@ -10,6 +10,7 @@ export default function Navigation() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsAuthenticated(authToken.isAuthenticated());
@@ -29,6 +30,7 @@ export default function Navigation() {
   const handleLogout = () => {
     authToken.remove();
     setIsAuthenticated(false);
+    setIsMobileMenuOpen(false);
   };
 
   if (!profile) return null;
@@ -41,7 +43,9 @@ export default function Navigation() {
             <a href="/" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
               {profile.displayName}
             </a>
-            <div className="flex gap-6 items-center">
+
+            {/* Desktop Menu */}
+            <div className="hidden md:flex gap-6 items-center">
               <a href="/" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
               <a href="/projects" className="text-gray-600 hover:text-gray-900 transition-colors">Projects</a>
               <a href="/blog" className="text-gray-600 hover:text-gray-900 transition-colors">Blog</a>
@@ -63,8 +67,80 @@ export default function Navigation() {
                 </button>
               )}
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="메뉴"
+            >
+              {isMobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+              <a
+                href="/"
+                className="text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About
+              </a>
+              <a
+                href="/projects"
+                className="text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Projects
+              </a>
+              <a
+                href="/blog"
+                className="text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Blog
+              </a>
+              <a
+                href="/contact"
+                className="text-gray-600 hover:text-gray-900 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contact
+              </a>
+
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-left"
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowLoginModal(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-left"
+                >
+                  로그인
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Login Modal */}
