@@ -78,7 +78,18 @@ export default function ProjectsPage() {
         sortDir: 'desc'
       });
       setProjectPage(pageData);
-      setProjects(pageData.content);
+
+      // Featured 프로젝트를 featuredOrder로 정렬하고, 나머지는 createdAt으로 정렬
+      const sortedProjects = pageData.content.sort((a, b) => {
+        if (a.isFeatured && b.isFeatured) {
+          return (a.featuredOrder || 0) - (b.featuredOrder || 0);
+        }
+        if (a.isFeatured) return -1;
+        if (b.isFeatured) return 1;
+        return 0;
+      });
+
+      setProjects(sortedProjects);
     } catch (err) {
       console.error('Failed to fetch projects:', err);
     } finally {
