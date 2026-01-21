@@ -33,7 +33,17 @@ export default function Navigation() {
     setIsMobileMenuOpen(false);
   };
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <>
