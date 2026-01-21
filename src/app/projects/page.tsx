@@ -506,7 +506,7 @@ function ProjectDetailModal({
     if (!value) return null;
     const normalized = value.replace(/\n/g, '  \n');
     return (
-      <div className="prose max-w-none text-gray-700">
+      <div className="prose prose-headings:font-bold prose-h3:text-lg prose-h3:text-gray-900 prose-h3:mt-6 prose-h3:mb-3 max-w-none text-gray-700">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{normalized}</ReactMarkdown>
       </div>
     );
