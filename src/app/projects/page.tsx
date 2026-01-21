@@ -169,9 +169,28 @@ export default function ProjectsPage() {
       // 각 프로젝트의 새로운 순서를 업데이트
       for (let i = 0; i < featuredProjects.length; i++) {
         const project = featuredProjects[i];
+        // 전체 프로젝트 정보를 가져와서 업데이트
+        const fullProject = await projectService.getProject(project.id);
         await projectService.updateProject(project.id, {
-          ...project,
+          title: fullProject.title,
+          slug: fullProject.slug,
+          summary: fullProject.summary,
+          contentMarkdown: fullProject.contentMarkdown || '',
+          startedAt: fullProject.startedAt,
+          endedAt: fullProject.endedAt,
+          isPublished: fullProject.isPublished,
+          isFeatured: fullProject.isFeatured,
           featuredOrder: i,
+          githubUrl: fullProject.githubUrl,
+          demoUrl: fullProject.demoUrl,
+          teamSize: fullProject.teamSize,
+          role: fullProject.role,
+          ownedServices: fullProject.ownedServices,
+          introductionMarkdown: fullProject.introductionMarkdown,
+          responsibilitiesMarkdown: fullProject.responsibilitiesMarkdown,
+          troubleshootingMarkdown: fullProject.troubleshootingMarkdown,
+          tagNames: fullProject.tags?.map(tag => tag.name),
+          thumbnailMediaId: fullProject.thumbnailMedia?.id,
         });
       }
       alert('순서가 저장되었습니다.');
