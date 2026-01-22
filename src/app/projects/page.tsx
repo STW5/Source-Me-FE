@@ -79,17 +79,8 @@ export default function ProjectsPage() {
       });
       setProjectPage(pageData);
 
-      // Featured 프로젝트를 featuredOrder로 정렬하고, 나머지는 createdAt으로 정렬
-      const sortedProjects = pageData.content.sort((a, b) => {
-        if (a.isFeatured && b.isFeatured) {
-          return (a.featuredOrder || 0) - (b.featuredOrder || 0);
-        }
-        if (a.isFeatured) return -1;
-        if (b.isFeatured) return 1;
-        return 0;
-      });
-
-      setProjects(sortedProjects);
+      // 백엔드에서 이미 정렬되어 오므로 그대로 사용
+      setProjects(pageData.content);
     } catch (err) {
       console.error('Failed to fetch projects:', err);
     } finally {
@@ -177,10 +168,19 @@ export default function ProjectsPage() {
 
   const handleSaveOrder = async () => {
     try {
-      // 각 프로젝트의 새로운 순서를 업데이트
-      for (let i = 0; i < featuredProjects.length; i++) {
-        const project = featuredProjects[i];
-        // 전체 프로젝트 정보를 가져와서 업데이트
+      console.log('Saving order for featured projects:', featuredProjects.map((p, i) => ({ id: p.id, title: p.title, newOrder: i })));
+
+      // 순서가 변경된 프로젝트만 업데이트하기 위해 병렬로 처리
+      const updatePromises = featuredProjects.map(async (project, newOrder) => {
+        // 순서가 변경되지 않은 경우 건너뛰기
+        if (project.featuredOrder === newOrder) {
+          console.log(`Skipping project ${project.id} (${project.title}) - order unchanged`);
+          return;
+        }
+
+        console.log(`Updating project ${project.id} (${project.title}) with featuredOrder: ${newOrder}`);
+
+        // 상세 정보를 가져와서 업데이트
         const fullProject = await projectService.getProject(project.id);
         await projectService.updateProject(project.id, {
           title: fullProject.title,
@@ -191,7 +191,7 @@ export default function ProjectsPage() {
           endedAt: fullProject.endedAt,
           isPublished: fullProject.isPublished,
           isFeatured: fullProject.isFeatured,
-          featuredOrder: i,
+          featuredOrder: newOrder,
           githubUrl: fullProject.githubUrl,
           demoUrl: fullProject.demoUrl,
           teamSize: fullProject.teamSize,
@@ -203,7 +203,10 @@ export default function ProjectsPage() {
           tagNames: fullProject.tags?.map(tag => tag.name),
           thumbnailMediaId: fullProject.thumbnailMedia?.id,
         });
-      }
+      });
+
+      await Promise.all(updatePromises);
+      console.log('All projects updated successfully');
       alert('순서가 저장되었습니다.');
       setReorderMode(false);
       await refreshProjects();
