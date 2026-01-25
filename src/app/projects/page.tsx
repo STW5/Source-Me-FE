@@ -195,7 +195,7 @@ export default function ProjectsPage() {
           githubUrl: fullProject.githubUrl,
           demoUrl: fullProject.demoUrl,
           teamSize: fullProject.teamSize,
-          role: fullProject.role,
+          projectRole: fullProject.projectRole,
           ownedServices: fullProject.ownedServices,
           introductionMarkdown: fullProject.introductionMarkdown,
           responsibilitiesMarkdown: fullProject.responsibilitiesMarkdown,
@@ -865,7 +865,7 @@ function ProjectDetailModal({
                     </div>
                     <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">역할</p>
                   </div>
-                  <p className="text-gray-900 font-bold text-lg">{project.role || '-'}</p>
+                  <p className="text-gray-900 font-bold text-lg">{project.projectRole || '-'}</p>
                 </div>
 
                 <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -968,7 +968,7 @@ function ProjectFormModal({
     githubUrl: project?.githubUrl || '',
     demoUrl: project?.demoUrl || '',
     teamSize: project?.teamSize || '',
-    role: project?.role || '',
+    projectRole: project?.projectRole || '',
     ownedServices: project?.ownedServices || '',
     introductionMarkdown: project?.introductionMarkdown || '',
     responsibilitiesMarkdown: project?.responsibilitiesMarkdown || '',
@@ -996,7 +996,7 @@ function ProjectFormModal({
       githubUrl: project?.githubUrl || '',
       demoUrl: project?.demoUrl || '',
       teamSize: project?.teamSize || '',
-      role: project?.role || '',
+      projectRole: project?.projectRole || '',
       ownedServices: project?.ownedServices || '',
       introductionMarkdown: project?.introductionMarkdown || '',
       responsibilitiesMarkdown: project?.responsibilitiesMarkdown || '',
@@ -1164,8 +1164,8 @@ function ProjectFormModal({
               </label>
               <input
                 type="text"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                value={formData.projectRole}
+                onChange={(e) => setFormData({ ...formData, projectRole: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>

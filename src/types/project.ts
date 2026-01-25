@@ -15,7 +15,7 @@ export interface Project {
   githubUrl?: string;
   demoUrl?: string;
   teamSize?: string;
-  role?: string;
+  projectRole?: string;
   ownedServices?: string;
   introductionMarkdown?: string;
   responsibilitiesMarkdown?: string;
@@ -37,7 +37,7 @@ export interface ProjectCreateRequest {
   githubUrl?: string | null;
   demoUrl?: string | null;
   teamSize?: string | null;
-  role?: string | null;
+  projectRole?: string | null;
   ownedServices?: string | null;
   introductionMarkdown?: string | null;
   responsibilitiesMarkdown?: string | null;
