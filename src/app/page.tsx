@@ -247,6 +247,48 @@ export default function Home() {
             </div>
           )}
 
+          {/* Work History Section */}
+          {profile.workHistory && profile.workHistory.length > 0 && (
+            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Work History</h2>
+              <div className="space-y-10">
+                {profile.workHistory.map((work, index) => (
+                  <div key={index} className="border-l-4 border-purple-500 pl-6">
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">{work.organization}</h3>
+                    <p className="text-lg text-gray-600 mb-2">{work.period}</p>
+                    <p className="text-lg font-medium text-gray-800 mb-4">{work.role}</p>
+                    {work.projects && work.projects.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-2">프로젝트</h4>
+                        <ul className="space-y-2">
+                          {work.projects.map((project, projIndex) => (
+                            <li key={projIndex} className="flex gap-3">
+                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
+                              <span className="text-gray-700">{project}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {work.activities && work.activities.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">활동</h4>
+                        <ul className="space-y-2">
+                          {work.activities.map((activity, actIndex) => (
+                            <li key={actIndex} className="flex gap-3">
+                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
+                              <span className="text-gray-700">{activity}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Internships Section */}
           {profile.internships && profile.internships.length > 0 && (
             <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
@@ -303,48 +345,6 @@ export default function Home() {
                           {edu.activities.map((activity, actIndex) => (
                             <li key={actIndex} className="flex gap-3">
                               <span className="text-green-600 font-bold flex-shrink-0 mt-1">•</span>
-                              <span className="text-gray-700">{activity}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Work History Section */}
-          {profile.workHistory && profile.workHistory.length > 0 && (
-            <div className="mt-8 md:mt-16 bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-12 hover:shadow-3xl transition-shadow">
-              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12 text-center">Work History</h2>
-              <div className="space-y-10">
-                {profile.workHistory.map((work, index) => (
-                  <div key={index} className="border-l-4 border-purple-500 pl-6">
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">{work.organization}</h3>
-                    <p className="text-lg text-gray-600 mb-2">{work.period}</p>
-                    <p className="text-lg font-medium text-gray-800 mb-4">{work.role}</p>
-                    {work.projects && work.projects.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-2">프로젝트</h4>
-                        <ul className="space-y-2">
-                          {work.projects.map((project, projIndex) => (
-                            <li key={projIndex} className="flex gap-3">
-                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
-                              <span className="text-gray-700">{project}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {work.activities && work.activities.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-2">활동</h4>
-                        <ul className="space-y-2">
-                          {work.activities.map((activity, actIndex) => (
-                            <li key={actIndex} className="flex gap-3">
-                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
                               <span className="text-gray-700">{activity}</span>
                             </li>
                           ))}
