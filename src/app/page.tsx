@@ -7,8 +7,6 @@ import { profileService } from '@/services/profileService';
 import { authToken } from '@/lib/auth';
 import { mediaService } from '@/services/mediaService';
 import { SiteProfile } from '@/types/profile';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 export default function Home() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);
@@ -260,21 +258,29 @@ export default function Home() {
                     <p className="text-lg text-gray-600 mb-2">{work.period}</p>
                     <p className="text-lg font-medium text-gray-800 mb-4">{work.role}</p>
                     {work.projects && work.projects.length > 0 && (
-                      <div className="mb-4 prose prose-lg max-w-none">
-                        {work.projects.map((project, projIndex) => (
-                          <ReactMarkdown key={projIndex} remarkPlugins={[remarkGfm]}>
-                            {project}
-                          </ReactMarkdown>
-                        ))}
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-2">프로젝트</h4>
+                        <ul className="space-y-2">
+                          {work.projects.map((project, projIndex) => (
+                            <li key={projIndex} className="flex gap-3">
+                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
+                              <span className="text-gray-700">{project}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     {work.activities && work.activities.length > 0 && (
-                      <div className="prose prose-lg max-w-none">
-                        {work.activities.map((activity, actIndex) => (
-                          <ReactMarkdown key={actIndex} remarkPlugins={[remarkGfm]}>
-                            {activity}
-                          </ReactMarkdown>
-                        ))}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-2">활동</h4>
+                        <ul className="space-y-2">
+                          {work.activities.map((activity, actIndex) => (
+                            <li key={actIndex} className="flex gap-3">
+                              <span className="text-purple-600 font-bold flex-shrink-0 mt-1">•</span>
+                              <span className="text-gray-700">{activity}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
