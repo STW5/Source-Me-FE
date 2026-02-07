@@ -259,7 +259,7 @@ export default function Home() {
                     <p className="text-lg font-medium text-gray-800 mb-4">{work.role}</p>
                     {work.projects && work.projects.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-2">프로젝트</h4>
+                        <h4 className="font-semibold text-gray-800 mb-2">업무 개요</h4>
                         <ul className="space-y-2">
                           {work.projects.map((project, projIndex) => (
                             <li key={projIndex} className="flex gap-3">
@@ -272,7 +272,7 @@ export default function Home() {
                     )}
                     {work.activities && work.activities.length > 0 && (
                       <div>
-                        <h4 className="font-semibold text-gray-800 mb-2">활동</h4>
+                        <h4 className="font-semibold text-gray-800 mb-2">주요 성과 및 업무 내용</h4>
                         <ul className="space-y-2">
                           {work.activities.map((activity, actIndex) => (
                             <li key={actIndex} className="flex gap-3">
